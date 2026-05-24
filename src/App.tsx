@@ -1,0 +1,3093 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { IMaskInput } from 'react-imask';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  onSnapshot
+} from 'firebase/firestore';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { db, auth, handleFirestoreError, OperationType } from './firebase';
+
+export interface NewsItem {
+  id: string | number;
+  category: string;
+  title: string;
+  date: string;
+  displayDate: string;
+  image: string;
+  excerpt: string;
+  content: string;
+  gallery?: string[];
+  videoUrl?: string;
+  isDemo?: boolean;
+}
+import { 
+  Heart, 
+  Menu, 
+  ArrowRight, 
+  ArrowUpRight,
+  Phone, 
+  Share2, 
+  Mail, 
+  ChevronRight, 
+  Leaf, 
+  CreditCard, 
+  Users, 
+  HandHeart,
+  FileText,
+  Download,
+  Info,
+  Star,
+  Instagram,
+  MessageCircle,
+  X,
+  Search,
+  Filter,
+  Calendar,
+  Banknote,
+  MapPin,
+  User,
+  Copy,
+  Check,
+  Plus,
+  Upload,
+  Lock,
+  Image,
+  Edit2,
+  Trash2,
+  ChevronDown,
+  ChevronLeft,
+  Maximize2
+} from 'lucide-react';
+
+// Character Components (Line Art Images)
+const WinniePooh = ({ className }: { className?: string }) => (
+  <motion.div 
+    initial={{ y: 20, opacity: 0 }}
+    whileInView={{ y: 0, opacity: 1 }}
+    className={`character-line-art ${className}`}
+  >
+    <img 
+      src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Bear.png" 
+      alt="Winnie" 
+      className="w-full h-full object-contain grayscale contrast-125"
+      referrerPolicy="no-referrer"
+    />
+  </motion.div>
+);
+
+const Hare = ({ className }: { className?: string }) => (
+  <motion.div 
+    initial={{ y: -50, opacity: 0 }}
+    whileInView={{ y: 0, opacity: 1 }}
+    className={`character-line-art ${className}`}
+  >
+    <img 
+      src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Rabbit%20Face.png" 
+      alt="Hare" 
+      className="w-full h-full object-contain grayscale contrast-125"
+      referrerPolicy="no-referrer"
+    />
+  </motion.div>
+);
+
+const Eeyore = ({ className }: { className?: string }) => (
+  <motion.div 
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: 1 }}
+    className={`character-line-art ${className}`}
+  >
+    <img 
+      src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Donkey.png" 
+      alt="Eeyore" 
+      className="w-full h-full object-contain grayscale contrast-125"
+      referrerPolicy="no-referrer"
+    />
+  </motion.div>
+);
+
+const Owl = ({ className, animateImmediately = true }: { className?: string; animateImmediately?: boolean }) => (
+  <motion.div 
+    initial={{ y: 20, opacity: 0 }}
+    animate={animateImmediately ? { y: 0, opacity: 1 } : undefined}
+    whileInView={!animateImmediately ? { y: 0, opacity: 1 } : undefined}
+    className={`character-line-art ${className}`}
+  >
+    <img 
+      src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Owl.png" 
+      alt="Owl" 
+      className="w-full h-full object-contain grayscale contrast-125"
+      referrerPolicy="no-referrer"
+    />
+  </motion.div>
+);
+
+const OrganizationLogo = ({ className = "w-full h-full" }: { className?: string }) => {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className={`relative ${className} flex items-center justify-center`}>
+      {!hasError ? (
+        <img 
+          src="/logo.svg" 
+          alt="Логотип фонда «Мы как все»"
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith('/logo.svg')) {
+              e.currentTarget.src = '/logo.png';
+            } else {
+              setHasError(true);
+            }
+          }}
+          className="w-full h-full object-contain"
+        />
+      ) : (
+        <div className="w-full h-full border border-dashed border-purple-300 rounded-xl bg-purple-50 flex items-center justify-center p-1 text-center font-black text-[9px] text-purple-700 leading-tight uppercase select-none animate-pulse">
+          ЛОГОТИП ФОНДА
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MotherChildIcon = ({ className = "relative w-12 h-12 flex items-center justify-center shrink-0", imgClassName = "w-full h-full object-contain opacity-75 hover:opacity-100 transition-all" }: { className?: string; imgClassName?: string }) => {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className={className}>
+      {!hasError ? (
+        <img 
+          src="/mother-child.svg" 
+          alt="Логотип «мама и дитя» проекта Мы как все"
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith('/mother-child.svg')) {
+              e.currentTarget.src = '/mother-child.png';
+            } else {
+              setHasError(true);
+            }
+          }}
+          className={imgClassName}
+        />
+      ) : (
+        <div className="w-full h-full border border-dashed border-purple-200 rounded-xl bg-purple-50/50 flex flex-col items-center justify-center p-0.5 text-center text-[8px] leading-tight font-black text-purple-600 select-none">
+          <span>МАМА</span>
+          <span>И ДИТЯ</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PartnerSlot = ({ num }: { num: number }) => {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className="w-full max-w-[170px] h-18 flex items-center justify-center relative">
+      {!hasError ? (
+        <img 
+          src={`/partners/partner-${num}.png`} 
+          alt={`Логотип партнера ${num}`}
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith('.png')) {
+              e.currentTarget.src = `/partners/partner-${num}.svg`;
+            } else {
+              setHasError(true);
+            }
+          }}
+          className="max-h-[52px] max-w-full object-contain pointer-events-none"
+        />
+      ) : (
+        <span className="text-xs font-black uppercase tracking-wider text-slate-400 select-none text-center">
+          ПАРТНЁР {num}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const GalleryImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className="relative w-full h-full bg-slate-100 flex items-center justify-center overflow-hidden">
+      {!hasError ? (
+        <img 
+          src={src} 
+          alt={alt} 
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith('.jpg')) {
+              e.currentTarget.src = src.replace('.jpg', '.png');
+            } else {
+              setHasError(true);
+            }
+          }}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-slate-50 flex flex-col items-center justify-center p-4 text-center select-none group-hover:bg-slate-100/80 transition-colors duration-300">
+          <Image size={24} className="text-purple-300 mb-2 animate-pulse" />
+          <span className="text-[10px] sm:text-xs font-black uppercase text-slate-500 tracking-wider">
+            {alt}
+          </span>
+          <span className="text-[9px] text-slate-300 mt-1 font-mono">{src}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+function HelpRequestForm() {
+  const [formData, setFormData] = useState({
+    parentName: '',
+    phone: '',
+    email: '',
+    childNameAge: '',
+    description: '',
+    consent: false,
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    if (!formData.parentName.trim()) newErrors.parentName = 'Пожалуйста, введите ваше ФИО';
+    if (!formData.phone.trim()) newErrors.phone = 'Пожалуйста, введите номер телефона';
+    if (!formData.email.trim()) newErrors.email = 'Пожалуйста, введите E-mail';
+    if (!formData.childNameAge.trim()) newErrors.childNameAge = 'Пожалуйста, укажите имя и возраст ребенка';
+    if (!formData.description.trim()) newErrors.description = 'Пожалуйста, опишите вашу ситуацию';
+    if (!formData.consent) newErrors.consent = 'Необходимо ваше согласие на обработку данных';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/help-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setSubmitError(errData.error || 'Произошла ошибка при отправке заявки. Пожалуйста, попробуйте еще раз.');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitError('Сетевая ошибка. Пожалуйста, проверьте интернет-соединение.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-12 flex flex-col items-center justify-center h-full"
+      >
+        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-6 shadow-xl shadow-purple-100">
+          <Check size={48} strokeWidth={3} className="animate-bounce" />
+        </div>
+        <h3 className="text-3xl font-headline font-black text-slate-900 mb-4">Спасибо! Заявка принята</h3>
+        <p className="text-slate-500 text-lg max-w-md mx-auto leading-relaxed mb-6">
+          Мы получили ваше обращение. Координаторы фонда свяжутся с вами по указанному номеру телефона в ближайшее время.
+        </p>
+        <button 
+          onClick={() => {
+            setIsSubmitted(false);
+            setFormData({
+              parentName: '',
+              phone: '',
+              email: '',
+              childNameAge: '',
+              description: '',
+              consent: false,
+            });
+          }}
+          className="px-6 py-2.5 bg-purple-600 text-white font-black rounded-xl hover:bg-purple-700 transition-all text-sm"
+        >
+          Отправить еще раз
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {submitError && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold leading-relaxed">
+          {submitError}
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label htmlFor="help-parentName" className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">ФИО родителя / опекуна *</label>
+          <input 
+            type="text"
+            id="help-parentName"
+            required
+            value={formData.parentName}
+            onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+            placeholder="Иванова Анна Сергеевна"
+            className={`w-full px-5 py-3 bg-slate-50 border ${errors.parentName ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/40 transition-all text-slate-900 font-bold`}
+          />
+          {errors.parentName && <span className="text-xs text-red-500 mt-1 block">{errors.parentName}</span>}
+        </div>
+
+        <div>
+          <label htmlFor="help-phone" className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Номер телефона *</label>
+          <IMaskInput
+            mask="+375 (00) 000-00-00"
+            id="help-phone"
+            value={formData.phone}
+            required
+            onAccept={(value: string) => setFormData(prev => ({ ...prev, phone: value }))}
+            className={`w-full px-5 py-3 bg-slate-50 border ${errors.phone ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/40 transition-all text-slate-900 font-bold`}
+            placeholder="+375 (__) ___-__-__"
+            type="tel"
+          />
+          {errors.phone && <span className="text-xs text-red-500 mt-1 block">{errors.phone}</span>}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label htmlFor="help-email" className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">E-mail *</label>
+          <input 
+            type="email"
+            id="help-email"
+            required
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="example@gmail.com"
+            className={`w-full px-5 py-3 bg-slate-50 border ${errors.email ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/40 transition-all text-slate-900 font-bold`}
+          />
+          {errors.email && <span className="text-xs text-red-500 mt-1 block">{errors.email}</span>}
+        </div>
+
+        <div>
+          <label htmlFor="help-childNameAge" className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Имя и возраст ребенка *</label>
+          <input 
+            type="text"
+            id="help-childNameAge"
+            required
+            value={formData.childNameAge}
+            onChange={(e) => setFormData({ ...formData, childNameAge: e.target.value })}
+            placeholder="Максим, 6 лет"
+            className={`w-full px-5 py-3 bg-slate-50 border ${errors.childNameAge ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/40 transition-all text-slate-900 font-bold`}
+          />
+          {errors.childNameAge && <span className="text-xs text-red-500 mt-1 block">{errors.childNameAge}</span>}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="help-description" className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Какая помощь вам необходима и описание ситуации *</label>
+        <textarea 
+          rows={4}
+          id="help-description"
+          required
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Опишите, пожалуйста, диагноз ребенка и вид поддержки (финансовая помощь, психологические группы, юридическая поддержка...)"
+          className={`w-full px-5 py-3 bg-slate-50 border ${errors.description ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/40 transition-all text-slate-900 font-bold resize-none`}
+        />
+        {errors.description && <span className="text-xs text-red-500 mt-1 block">{errors.description}</span>}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <label htmlFor="help-consent" className="flex items-start gap-3 cursor-pointer select-none">
+          <input 
+            type="checkbox"
+            id="help-consent"
+            required
+            checked={formData.consent}
+            onChange={(e) => setFormData({ ...formData, consent: e.target.checked })}
+            className="mt-1 h-4 w-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 focus-visible:ring-purple-500/40"
+          />
+          <span className="text-xs text-slate-500 leading-normal">
+            Я даю согласие на обработку моих персональных данных и подтверждаю достоверность предоставленных сведений. *
+          </span>
+        </label>
+        {errors.consent && <span className="text-xs text-red-500 block">{errors.consent}</span>}
+      </div>
+
+      <div className="pt-2">
+        <button 
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black shadow-lg shadow-purple-200 hover:shadow-xl transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-55 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Отправка...' : 'Отправить заявку'} <ArrowRight size={18} />
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export default function App() {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [dbError, setDbError] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  
+  // Editing state
+  const [editingProjectId, setEditingProjectId] = useState<string | number | null>(null);
+  const [addProjectError, setAddProjectError] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [newProject, setNewProject] = useState({
+    title: '',
+    category: 'Новости',
+    excerpt: '',
+    content: '',
+    image: '',
+    gallery: [] as string[],
+    videoUrl: ''
+  });
+
+  // Track Firebase Auth state for administration permissions
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time Firestore synchronizer for news/projects
+  useEffect(() => {
+    const projectsPath = 'projects';
+    const unsubscribe = onSnapshot(collection(db, projectsPath), (snapshot) => {
+      setDbError(false);
+      if (snapshot.empty) {
+        // If the database is empty, keep it empty to allow user to manage real projects
+        setNews([]);
+      } else {
+        const loadedProjects = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            id: Number(doc.id) || doc.id
+          };
+        }) as NewsItem[];
+        setNews(loadedProjects);
+      }
+    }, (error) => {
+      setDbError(true);
+      handleFirestoreError(error, OperationType.GET, projectsPath);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setIsAuthLoading(true);
+    try {
+      // Sign in to Firebase Auth
+      await signInWithEmailAndPassword(auth, loginForm.username, loginForm.password);
+      setIsLoginOpen(false);
+      setLoginForm({ username: '', password: '' });
+    } catch (error: any) {
+      console.error("Authentication action failed:", error);
+      let errorMsg = error.message || String(error);
+      
+      // Localized clean messages
+      if (errorMsg.includes('auth/invalid-email')) {
+        errorMsg = 'Некорректный формат адреса электронной почты.';
+      } else if (errorMsg.includes('auth/invalid-credential') || errorMsg.includes('auth/user-not-found') || errorMsg.includes('auth/wrong-password')) {
+        errorMsg = 'Неверный логин или пароль.';
+      } else if (errorMsg.includes('auth/missing-password')) {
+        errorMsg = 'Введите пароль.';
+      } else {
+        errorMsg = 'Ошибка авторизации. Убедитесь, что пользователь зарегистрирован в Firebase Auth.';
+      }
+      setLoginError(errorMsg);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAdmin(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const compressImage = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.75): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
+            resolve(e.target?.result as string);
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const compressedBase64 = await compressImage(file);
+        setNewProject(prev => ({ ...prev, image: compressedBase64 }));
+      } catch (err) {
+        console.error("Error compressing image:", err);
+        // Fallback to original
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setNewProject(prev => ({ ...prev, image: reader.result as string }));
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleGalleryChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      try {
+        const promises = Array.from(files).map(file => compressImage(file, 1000, 1000, 0.7));
+        const results = await Promise.all(promises);
+        setNewProject(prev => ({ ...prev, gallery: [...prev.gallery, ...results] }));
+      } catch (err) {
+        console.error("Error compressing gallery images:", err);
+        // Fallback to original
+        const readers = Array.from(files).map(file => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+        });
+
+        Promise.all(readers).then(results => {
+          setNewProject(prev => ({ ...prev, gallery: [...prev.gallery, ...results] }));
+        });
+      }
+    }
+  };
+
+  const handleAddProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddProjectError(null);
+    setIsPublishing(true);
+
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const displayDate = today.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const targetId = editingProjectId ? String(editingProjectId) : String(Date.now());
+    
+    // Maintain existing dates if we are editing
+    const existingDate = editingProjectId 
+      ? (news.find(n => n.id === editingProjectId || String(n.id) === String(editingProjectId))?.date || dateStr)
+      : dateStr;
+    const existingDisplayDate = editingProjectId 
+      ? (news.find(n => n.id === editingProjectId || String(n.id) === String(editingProjectId))?.displayDate || displayDate)
+      : displayDate;
+
+    const newItem = {
+      title: newProject.title,
+      category: newProject.category,
+      excerpt: newProject.excerpt,
+      content: newProject.content,
+      image: newProject.image,
+      gallery: newProject.gallery,
+      videoUrl: newProject.videoUrl,
+      id: editingProjectId ? (Number(editingProjectId) || editingProjectId) : Number(targetId),
+      date: existingDate,
+      displayDate: existingDisplayDate
+    };
+
+    const projectsPath = 'projects';
+    try {
+      await setDoc(doc(db, projectsPath, targetId), newItem);
+      setIsAddProjectOpen(false);
+      setEditingProjectId(null);
+      setNewProject({
+        title: '',
+        category: 'Новости',
+        excerpt: '',
+        content: '',
+        image: '',
+        gallery: [] as string[],
+        videoUrl: ''
+      });
+    } catch (error: any) {
+      console.error("Firestore save error:", error);
+      const isPermissionErr = error.message?.toLowerCase().includes('permission') || 
+                              error.code === 'permission-denied';
+      if (isPermissionErr) {
+        setAddProjectError(
+          'Ошибка доступа: У вашей учетной записи недостаточно прав для изменения данных в Firestore. Пожалуйста, убедитесь, что в Firebase Console во вкладке Firestore -> Rules закреплены корректные правила доступа.'
+        );
+      } else {
+        setAddProjectError(`Ошибка сохранения: ${error.message || error}`);
+      }
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const [activeHelpTab, setActiveHelpTab] = useState('individuals');
+  const [activeMainSection, setActiveMainSection] = useState('home');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('Все');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedNews) return;
+    
+    const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (lightboxImageIndex !== null) {
+          setLightboxImageIndex(null);
+        } else {
+          setSelectedNews(null);
+        }
+      } else if (lightboxImageIndex !== null && allImages.length > 0) {
+        if (e.key === 'ArrowLeft') {
+          setLightboxImageIndex((prev) => (prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0));
+        } else if (e.key === 'ArrowRight') {
+          setLightboxImageIndex((prev) => (prev !== null ? (prev + 1) % allImages.length : 0));
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxImageIndex, selectedNews]);
+  const [isOwlOpen, setIsOwlOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [currentIcon, setCurrentIcon] = useState('owl');
+
+  const [copiedFooterIban, setCopiedFooterIban] = useState(false);
+  const [copiedFooterBik, setCopiedFooterBik] = useState(false);
+  const [copiedFooterUssd, setCopiedFooterUssd] = useState(false);
+  const [copiedFooterSms, setCopiedFooterSms] = useState(false);
+  const [copiedHeaderUssd, setCopiedHeaderUssd] = useState(false);
+  const [copiedHeaderSms, setCopiedHeaderSms] = useState(false);
+
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'validation_error'>('idle');
+  const [validationError, setValidationError] = useState<string>('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    if (!formData.phone.trim() && !formData.email.trim()) {
+      setValidationError('Укажите телефон или почту для связи');
+      return false;
+    }
+
+    if (formData.phone.trim()) {
+      // Mask: +375 (99) 999-99-99
+      const phoneDigits = formData.phone.replace(/\D/g, '');
+      if (phoneDigits.length !== 12) { // 375 + 9 digits
+        setValidationError('Введите корректный номер телефона (+375 XX XXX-XX-XX)');
+        return false;
+      }
+    }
+
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setValidationError('Введите корректный адрес электронной почты');
+        return false;
+      }
+    }
+
+    setValidationError('');
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      setSubmitStatus('validation_error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFormData({ name: '', phone: '', email: '' });
+        setTimeout(() => {
+          setIsOwlOpen(false);
+          setSubmitStatus('idle');
+        }, 3000);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIcon((prev) => (prev === 'owl' ? 'message' : 'owl'));
+    }, 3500); // Cycle every 3.5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const helpTabs = [
+    {
+      id: 'sponsors',
+      title: 'Спонсорам',
+      fullTitle: 'Стать спонсором',
+      icon: <Star size={24} fill="currentColor" />,
+      color: 'amber',
+      bg: 'bg-amber-50',
+      border: 'border-amber-100',
+      text: 'text-amber-700',
+      iconColor: 'text-amber-600',
+      desc: 'Корпоративное партнерство и системная поддержка программ фонда.',
+      cta: 'Подробнее',
+      ctaIcon: <ChevronRight size={16} />
+    },
+    {
+      id: 'individuals',
+      title: 'Частным лицам',
+      fullTitle: 'Помощь от физлиц',
+      icon: <Heart size={24} fill="currentColor" />,
+      color: 'purple',
+      bg: 'bg-purple-50',
+      border: 'border-purple-100',
+      text: 'text-purple-700',
+      iconColor: 'text-purple-600',
+      desc: 'Разовые пожертвования или оформление ежемесячной подписки.',
+      cta: 'Пожертвовать',
+      ctaIcon: <Heart size={16} />
+    },
+    {
+      id: 'volunteers',
+      title: 'Волонтерам',
+      fullTitle: 'Волонтерство',
+      icon: <Users size={24} />,
+      color: 'emerald',
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-100',
+      text: 'text-emerald-700',
+      iconColor: 'text-emerald-600',
+      desc: 'Станьте частью нашей команды и помогайте делом или знаниями.',
+      cta: 'Заполнить анкету',
+      ctaIcon: <ArrowRight size={16} />
+    }
+  ];
+
+  const activeTab = helpTabs.find(t => t.id === activeHelpTab) || helpTabs[1];
+
+  return (
+    <div className="min-h-screen overflow-x-hidden selection:bg-purple-100 selection:text-purple-900">
+      {/* Header */}
+      <header className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-16 h-16 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+              onClick={() => !isAdmin && setIsLoginOpen(true)}
+            >
+              <OrganizationLogo />
+            </div>
+             <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
+               <a
+                 href="tel:*222*75%23"
+                 onClick={() => {
+                   navigator.clipboard.writeText('*222*75#');
+                   setCopiedHeaderUssd(true);
+                   setTimeout(() => setCopiedHeaderUssd(false), 2000);
+                 }}
+                 className="bg-purple-600 hover:bg-purple-700 hover:scale-[1.03] active:scale-95 text-white px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full flex items-center justify-center font-black transition-all shadow-md shadow-purple-200 select-all"
+                 title="Наберите USSD-запрос или нажмите, чтобы скопировать"
+               >
+                 <span className={`text-sm sm:text-base md:text-lg font-headline font-black pr-[0.18em] transition-all ${copiedHeaderUssd ? 'tracking-normal text-emerald-300' : 'tracking-[0.18em]'}`}>
+                   {copiedHeaderUssd ? '✓ СКОПИРОВАНО' : '*222*75#'}
+                 </span>
+               </a>
+ 
+               <a
+                 href="sms:2275"
+                 onClick={() => {
+                   navigator.clipboard.writeText('2275');
+                   setCopiedHeaderSms(true);
+                   setTimeout(() => setCopiedHeaderSms(false), 2000);
+                 }}
+                 className="bg-purple-50 hover:bg-purple-100/90 text-purple-700 hover:scale-[1.03] active:scale-95 px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full flex items-center justify-center font-black transition-all border border-purple-100/80 select-all"
+                 title="Отправьте SMS или нажмите, чтобы скопировать"
+               >
+                 <span className={`text-sm sm:text-base md:text-lg font-headline font-black pr-[0.18em] transition-all ${copiedHeaderSms ? 'tracking-normal text-emerald-600' : 'tracking-[0.18em]'}`}>
+                   {copiedHeaderSms ? '✓ ОТПРАВЛЕНО' : '2275'}
+                 </span>
+               </a>
+             </div>
+          </div>
+          
+          <nav className="hidden lg:flex items-center gap-8">
+            {[
+              { name: 'Наш фонд', id: 'home' },
+              { name: 'Проекты', id: 'projects' },
+              { name: 'Хочу помочь', id: 'help' },
+              { name: 'Получить помощь', id: 'get_help' }
+            ].map((item) => (
+              <button 
+                key={item.id} 
+                aria-current={activeMainSection === item.id ? 'page' : undefined}
+                aria-label={`Открыть раздел: ${item.name}`}
+                onClick={() => {
+                  setActiveMainSection(item.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`text-sm font-bold uppercase tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 rounded-lg px-2 py-1 ${activeMainSection === item.id ? 'text-purple-600' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                {item.name}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              aria-label="Открыть мобильное меню"
+              className="lg:hidden text-slate-900 p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl transition-colors"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Top Dropdown Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm lg:hidden"
+            />
+            <motion.div
+              initial={{ y: '-100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '-100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Мобильное меню навигации"
+              className="fixed top-0 left-0 right-0 z-[130] bg-white shadow-2xl rounded-b-[2rem] border-b border-slate-100 lg:hidden p-6 pt-20"
+            >
+              <div className="absolute top-4 right-6 flex items-center justify-end">
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label="Закрыть мобильное меню"
+                  className="p-2 text-slate-500 hover:text-slate-950 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <nav className="flex flex-col gap-1">
+                {[
+                  { name: 'Наш фонд', id: 'home' },
+                  { name: 'Проекты', id: 'projects' },
+                  { name: 'Хочу помочь', id: 'help' },
+                  { name: 'Получить помощь', id: 'get_help' }
+                ].map((item) => (
+                  <button 
+                    key={item.id} 
+                    aria-current={activeMainSection === item.id ? 'page' : undefined}
+                    aria-label={`Открыть раздел: ${item.name}`}
+                    onClick={() => {
+                      setActiveMainSection(item.id);
+                      setIsMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`text-left py-3.5 px-4 rounded-2xl font-headline font-black text-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${activeMainSection === item.id ? 'bg-purple-50 text-purple-700' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <main className="pt-20">
+        {activeMainSection === 'home' ? (
+          <>
+            {/* Hero Section */}
+            <section className="relative pt-8 pb-20 overflow-hidden">
+              {/* Blobs */}
+              <div className="blob w-48 h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500 top-0 -left-20 opacity-40" />
+              <div className="blob w-40 h-40 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-yellow-400 bottom-0 right-0 opacity-40" />
+              <div className="blob w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-pink-400 top-1/2 -right-10 opacity-30" />
+              
+              <div className="max-w-7xl mx-auto px-6">
+                {/* Centered Badge */}
+                <div className="flex justify-center mb-12">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="inline-block px-6 py-2 bg-white/95 backdrop-blur-sm rounded-full text-2xl md:text-4xl font-black uppercase tracking-widest text-purple-600 shadow-md border border-purple-100/95 relative z-10 whitespace-nowrap"
+                  >
+                    Мы как все
+                  </motion.div>
+                </div>
+
+                <div className="grid lg:grid-cols-12 gap-16 items-center">
+                  <div className="lg:col-span-9 relative z-10 flex flex-col items-start text-left">
+                    <motion.h1 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 0.99, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-[34px] xs:text-[42px] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-headline font-extrabold text-slate-900 leading-[1.0] xs:leading-[0.95] tracking-tighter mb-8 w-full"
+                    >
+                      Свободное <br className="xs:hidden" />пространство <br />
+                      <span className="text-purple-600 inline-block font-headline font-extrabold">для добрых дел</span>
+                    </motion.h1>
+                    
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="hidden sm:block text-base sm:text-lg md:text-xl text-slate-500 sm:max-w-[540px] md:max-w-[660px] lg:max-w-[820px] leading-relaxed mb-10"
+                    >
+                      Помогаем семьям с детьми с особенностями развития обрести уверенность в завтрашнем дне через системную поддержку и заботу.
+                    </motion.p>
+                    
+                    <div className="flex flex-row flex-nowrap justify-start gap-2.5 sm:gap-4 w-full">
+                      <button 
+                        onClick={() => {
+                          setActiveMainSection('help');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="px-4 py-3 sm:px-8 sm:py-4 bg-purple-600 text-white rounded-xl sm:rounded-2xl text-xs sm:text-base font-bold hover:bg-purple-700 transition-all shadow-xl shadow-purple-200 flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap cursor-pointer"
+                      >
+                        Хочу помочь <ArrowRight size={14} className="sm:w-[18px] sm:h-[18px]" />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setActiveMainSection('get_help');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="px-4 py-3 sm:px-8 sm:py-4 bg-white border border-slate-200 text-slate-900 rounded-xl sm:rounded-2xl text-xs sm:text-base font-bold hover:bg-slate-50 transition-all shrink-0 whitespace-nowrap cursor-pointer"
+                      >
+                        Мне нужна помощь
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Optional: Add an illustration or image here if needed in the future to fill the right column */}
+                  <div className="lg:col-span-3 hidden lg:block" />
+                </div>
+              </div>
+            </section>
+
+           {/* Sponsors */}
+            <section className="pt-10 pb-8 border-y border-slate-100 bg-white relative overflow-visible">
+              {/* Радиальный белый градиент за кроликом */}
+              <div className="absolute top-0 left-0 w-48 sm:w-64 h-24 bg-[radial-gradient(circle_at_top_left,_white_60%,_transparent_100%)] z-10 pointer-events-none" />
+
+              <Hare className="absolute -top-14 left-4 sm:left-12 w-24 sm:w-28 md:w-32 z-20 -rotate-6 pointer-events-none" />
+              
+              {/* Карусель приподнята на "-mt-4" для перекрытия с кроликом и градиентом */}
+              <div className="w-full relative overflow-hidden -mt-4">
+                {/* Левая маска угасания расширена (w-1/4 sm:w-1/3), чтобы логотипы гармонично растворялись под кроликом */}
+                <div className="absolute left-0 top-0 bottom-0 w-1/4 sm:w-1/3 bg-gradient-to-r from-white via-white/90 to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                
+                {/* Бегущая строка */}
+                <div className="flex w-full overflow-hidden">
+                  <div className="flex gap-8 py-2 animate-marquee whitespace-nowrap shrink-0">
+                    {/* Первая копия (теперь здесь 6 партнеров: от 1 до 6) */}
+                    {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((num, idx) => (
+                      <div key={`partner-a-${idx}`} className="w-40 flex-shrink-0 flex items-center justify-center">
+                        <PartnerSlot num={num} />
+                      </div>
+                    ))}
+                    {/* Вторая копия */}
+                    {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((num, idx) => (
+                      <div key={`partner-b-${idx}`} className="w-40 flex-shrink-0 flex items-center justify-center">
+                        <PartnerSlot num={num} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Community Events - Bento Grid with Central Title */}
+            <section className="py-0 relative overflow-hidden bg-slate-50/50">
+              <div className="blob w-[600px] h-[600px] bg-purple-50/50 -top-48 -left-48 opacity-40" />
+              <div className="blob w-[400px] h-[400px] bg-amber-100/40 -bottom-24 -right-24 opacity-50" />
+              
+              <div className="max-w-7xl mx-auto px-6 relative z-10">
+                {/* Asymmetrical Bento Grid based on scheme */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[180px] md:auto-rows-[220px]">
+                  
+                  {/* Row 1: Small + Wide */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-4 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                  >
+                    <div className="h-full flex flex-col">
+                      <div className="h-[85%] overflow-hidden">
+                        <GalleryImage src="/gallery/event-1.jpg" alt="Встреча недели" />
+                      </div>
+                      <div className="h-[15%] flex items-center px-4 bg-white">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider">Встреча недели</h3>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-8 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                  >
+                    <div className="h-full flex flex-col">
+                      <div className="h-[85%] overflow-hidden">
+                        <GalleryImage src="/gallery/event-2.jpg" alt="Мастер-класс по рисованию" />
+                      </div>
+                      <div className="h-[15%] flex items-center px-4 bg-white">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider">Мастер-класс по рисованию</h3>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Row 2: Tall + Title (Center) + Square */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-4 md:row-span-2 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                  >
+                    <div className="h-full flex flex-col">
+                      <div className="h-[90%] overflow-hidden">
+                        <GalleryImage src="/gallery/event-3.jpg" alt="Летний лагерь" />
+                      </div>
+                      <div className="h-[10%] flex items-center px-4 bg-white">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider">Летний лагерь</h3>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* CENTRAL PURPLE BLOCK - Title Block (Centered) */}
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-4 md:row-span-1 bg-purple-600 rounded-3xl flex flex-col items-center justify-center p-6 text-center shadow-xl z-20 relative overflow-hidden cursor-pointer order-first md:order-none"
+                  >
+                    <div className="relative z-10">
+                      <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-white mb-4 tracking-tighter leading-tight">События фонда</h2>
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="h-px w-8 bg-white/30" />
+                        <Heart size={16} className="text-white fill-current" />
+                        <div className="h-px w-8 bg-white/30" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-4 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                  >
+                    <div className="h-full flex flex-col">
+                      <div className="h-[85%] overflow-hidden">
+                        <GalleryImage src="/gallery/event-4.jpg" alt="Кинопоказ" />
+                      </div>
+                      <div className="h-[15%] flex items-center px-4 bg-white">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider">Кинопоказ</h3>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    onClick={() => {
+                      setActiveMainSection('projects');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="md:col-span-8 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                  >
+                    <div className="h-full flex flex-col">
+                      <div className="h-[85%] overflow-hidden">
+                        <GalleryImage src="/gallery/event-5.jpg" alt="Семейный пикник" />
+                      </div>
+                      <div className="h-[15%] flex items-center px-4 bg-white">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider">Семейный пикник</h3>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </section>
+
+            {/* Heart Divider Strip */}
+            <div className="flex justify-center gap-6 py-6 overflow-hidden whitespace-nowrap opacity-20 select-none bg-purple-50/30">
+              {[...Array(30)].map((_, i) => (
+                <Heart key={i} size={18} className="text-purple-600 fill-current shrink-0 animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
+              ))}
+            </div>
+
+            {/* Combined Help Section for seamless background (Questions) */}
+            <div className="bg-slate-50/50 relative overflow-hidden">
+              {/* Shared Background Blobs */}
+              {/* Green gradient near financial support going down */}
+              <div className="blob w-[400px] h-[800px] bg-emerald-400 top-[250px] -left-20 opacity-25 blur-[120px]" />
+              
+              {/* Purple-blue behind the bear */}
+              <div className="blob w-96 h-96 bg-purple-500 -top-20 -right-20 opacity-30 blur-[100px]" />
+              <div className="blob w-80 h-80 bg-blue-600 top-0 -right-10 opacity-20 blur-[80px]" />
+
+              {/* Help Categories (Какую помощь можно получить?) */}
+              <section className="pt-10 sm:pt-16 pb-12 relative">
+                <WinniePooh className="absolute -top-2 right-4 sm:top-[34px] lg:top-10 sm:right-10 w-20 sm:w-32 opacity-10 sm:opacity-20 -rotate-12 pointer-events-none" />
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
+                    <div>
+                      <h2 className="text-3xl sm:text-4xl md:text-6xl font-headline font-extrabold text-slate-900 mb-5">Какую помощь можно получить?</h2>
+                      <p className="text-slate-500 md:max-w-none">Мы поддерживаем семьи на каждом этапе, от юридических тонкостей до повседневных нужд.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                      {/* Card 1 */}
+                      <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+                            <Leaf size={20} />
+                          </div>
+                          <h3 className="text-lg font-headline font-bold text-slate-900 leading-tight flex items-center justify-between flex-1">
+                            Финансовая поддержка
+                            <ArrowUpRight size={24} className="text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0" />
+                          </h3>
+                        </div>
+                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Адресная помощь на лечение и реабилитацию детей с ОВЗ.</p>
+                      </motion.div>
+
+                      {/* Card 2 */}
+                      <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                            <CreditCard size={20} />
+                          </div>
+                          <h3 className="text-lg font-headline font-bold text-slate-900 leading-tight flex items-center justify-between flex-1">
+                            Выплаты и пособия
+                            <ArrowUpRight size={24} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
+                          </h3>
+                        </div>
+                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Юридическая консультация по получению государственных льгот.</p>
+                      </motion.div>
+
+                      {/* Card 3 */}
+                      <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative flex flex-col justify-center h-[160px]"
+                      >
+                        <div className="relative z-10">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                              <Users size={20} />
+                            </div>
+                            <h3 className="text-lg font-headline font-bold text-slate-900 leading-tight">Другая помощь</h3>
+                          </div>
+                          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Психологические группы и досуговые мероприятия для всей семьи.</p>
+                        </div>
+
+                        {/* Stickers clustered at the bottom with overlap and overflow */}
+                        <div className="absolute -top-5 left-1 md:-left-12 z-40 rotate-[-15deg] scale-90 sm:scale-100">
+                          <span className="px-5 py-2 bg-purple-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-purple-600 block whitespace-nowrap">Услуги</span>
+                        </div>
+                        
+                        <div className="absolute -bottom-4 left-1 md:-left-6 z-20 rotate-[-10deg] scale-90 sm:scale-100">
+                          <span className="px-5 py-2 bg-emerald-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-emerald-600 block whitespace-nowrap">Продукты</span>
+                        </div>
+                        <div className="absolute -bottom-9 left-[22%] md:left-1/4 z-30 rotate-[6deg] scale-90 sm:scale-100">
+                          <span className="px-5 py-2 bg-pink-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-pink-600 block whitespace-nowrap">Одежда</span>
+                        </div>
+                        <div className="absolute -bottom-4 right-1 left-auto md:left-[55%] md:right-auto z-20 rotate-[-5deg] scale-90 sm:scale-100">
+                          <span className="px-5 py-2 bg-blue-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-blue-600 block whitespace-nowrap">Игрушки</span>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* How to Help (Как можно получить помощь?) */}
+              <section className="pt-0 sm:pt-4 pb-16 relative">
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                  <div className="mb-0 flex items-center justify-end relative min-h-[96px] sm:min-h-[140px] md:min-h-[180px] lg:min-h-0">
+                    <div className="absolute -left-4 xs:-left-6 sm:left-[-11px] md:left-[-3px] lg:-left-4 xl:left-0 top-1/2 -translate-y-[calc(50%+15px)] sm:-translate-y-1/2 z-50 pointer-events-none">
+                      <Eeyore className="w-20 xs:w-24 sm:w-36 md:w-44 lg:w-48 xl:w-64 -rotate-12 opacity-70 hover:opacity-100 transition-opacity scale-x-[-1]" />
+                    </div>
+                    <div className="text-right relative z-30 w-full">
+                      <h2 className="text-3xl sm:text-4xl md:text-6xl lg:-translate-y-[6px] font-headline font-extrabold text-slate-900 leading-[1.1] tracking-tighter">
+                        <span className="block whitespace-nowrap">Как можно</span>
+                        <span className="block whitespace-nowrap">получить помощь?</span>
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="max-w-4xl mx-auto">
+                    {/* Documentation Style Tabs - Aligned Right, dynamic width on mobile */}
+                    <div role="tablist" aria-label="Категории помощи" className="flex w-full items-end justify-between sm:justify-end -mb-px relative z-40 mt-2 sm:mt-4 lg:mt-10 gap-1 sm:gap-0">
+                      {helpTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          id={`help-tab-${tab.id}`}
+                          role="tab"
+                          aria-selected={activeHelpTab === tab.id}
+                          aria-controls={`help-tabpanel-${tab.id}`}
+                          onClick={() => setActiveHelpTab(tab.id)}
+                          className={`flex-1 sm:flex-initial px-1 xs:px-2 py-3 sm:px-8 sm:py-4 font-headline font-black text-[10px] xs:text-xs min-[390px]:text-[13px] sm:text-lg transition-all duration-300 border-t border-x rounded-t-2xl sm:rounded-t-xl text-center flex justify-center items-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 ${
+                            activeHelpTab === tab.id 
+                              ? `${tab.bg} ${tab.text} ${tab.border} border-b-transparent z-30 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]` 
+                              : 'bg-slate-100/50 text-slate-400 border-transparent hover:bg-slate-100 z-10'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1 sm:gap-3 justify-center">
+                            {React.cloneElement(tab.icon as React.ReactElement, { size: 16, className: `hidden min-[370px]:block shrink-0 ${activeHelpTab === tab.id ? '' : 'opacity-30'}` } as any)}
+                            <span className="whitespace-nowrap">{tab.title}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Main Content Container with responsive paddings */}
+                    <div className={`relative rounded-b-[2rem] rounded-tr-none rounded-tl-none sm:rounded-tl-[2rem] border shadow-xl overflow-hidden transition-all duration-500 ${activeTab.bg} ${activeTab.border}`}>
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={activeHelpTab}
+                          id={`help-tabpanel-${activeHelpTab}`}
+                          role="tabpanel"
+                          aria-labelledby={`help-tab-${activeHelpTab}`}
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="pt-6 px-5 pb-5 md:pt-10 md:px-12 md:pb-6 flex flex-col md:flex-row items-center gap-8"
+                        >
+                          <div className="flex-1 space-y-4">
+                            <h3 className="text-2xl md:text-3xl font-headline font-black text-slate-900 leading-tight">
+                              {activeTab.fullTitle}
+                            </h3>
+                            
+                            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-xl">
+                              {activeTab.desc}
+                            </p>
+
+                            <div className="pt-2">
+                              <a 
+                                href="#" 
+                                className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
+                                  activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
+                                  activeHelpTab === 'individuals' ? 'bg-purple-600 shadow-purple-100' :
+                                  'bg-emerald-600 shadow-emerald-100'
+                                }`}
+                              >
+                                {activeTab.cta}
+                                {activeTab.ctaIcon}
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="hidden md:block relative w-32 h-32 opacity-20">
+                            <div className="relative z-10 w-full h-full flex items-center justify-center">
+                              {activeHelpTab === 'sponsors' && <Star size={80} fill="currentColor" />}
+                              {activeHelpTab === 'individuals' && <Heart size={80} fill="currentColor" />}
+                              {activeHelpTab === 'volunteers' && <Users size={80} />}
+                            </div>
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Project Stats Section */}
+            <section className="pt-6 pb-12 sm:py-12 bg-purple-50/80 relative overflow-hidden text-slate-900 border-t border-purple-100">
+              <div className="blob w-96 h-96 bg-purple-200/40 top-0 -right-20 opacity-30" />
+              <div className="blob w-64 h-64 bg-yellow-200/30 -bottom-10 -left-10 opacity-30" />
+              
+              <div className="max-w-5xl mx-auto px-6 relative z-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-8 mb-0 sm:mb-10">
+                  <div className="max-w-2xl lg:max-w-none">
+                    <motion.h2 
+                       initial={{ opacity: 0, x: -20 }}
+                       whileInView={{ opacity: 1, x: 0 }}
+                       className="font-headline font-extrabold leading-none tracking-tighter"
+                    >
+                      <span className="text-[28px] sm:text-[36px] md:text-[44px] block text-purple-900">Проект</span>
+                      <span className="text-[30px] xs:text-[34px] sm:text-[44px] md:text-[56px] text-purple-600 block whitespace-nowrap">«Мы как все»</span>
+                    </motion.h2>
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      className="mt-2 text-base md:text-lg text-slate-600 leading-relaxed lg:whitespace-nowrap"
+                    >
+                      Мы поддерживаем семьи, в которых растут дети с особенностями развития.
+                    </motion.p>
+                  </div>
+                  <div className="shrink-0 font-bold">
+                    <a 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveMainSection('projects');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      href="#" 
+                      className="inline-flex items-center gap-2 font-black text-purple-600 hover:text-purple-800 transition-colors text-base"
+                    >
+                      Подробнее <ArrowRight size={20} />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-4 md:gap-6">
+                  {[
+                    { val: '20+', label: 'Стольким семьям уже помогли' },
+                    { val: '9+', label: 'Проектов реализовано' },
+                    { val: '20+', label: 'Мероприятий проведено' }
+                  ].map((stat, i) => (
+                    <motion.div 
+                      key={i} 
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="bg-white rounded-2xl sm:rounded-[2rem] py-3.5 px-1.5 sm:p-6 text-center shadow-md sm:shadow-lg border border-purple-100/30 transform hover:-translate-y-1 transition-all group"
+                    >
+                      <div className="text-xl sm:text-3xl font-headline font-black text-orange-500 mb-1">{stat.val}</div>
+                      <div className="text-purple-950 font-bold text-[9px] sm:text-xs md:text-sm leading-tight mb-1">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </>
+    ) : activeMainSection === 'help' ? (
+      <section className="py-12 bg-slate-50 min-h-screen relative overflow-hidden">
+        {/* Sky blue ambient glow in the top-left corner */}
+        <div className="absolute -top-32 -left-32 w-[320px] sm:w-[440px] h-[320px] sm:h-[440px] rounded-full bg-sky-400/25 blur-[90px] pointer-events-none z-0" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 grid md:grid-cols-12 gap-8 items-center"
+          >
+            <div className="md:col-span-7 space-y-4 text-center md:text-left pr-0 md:pr-4">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-black text-slate-900 tracking-tighter leading-none">
+                Хочу помочь
+              </h1>
+              <p className="text-base sm:text-lg text-slate-500 leading-relaxed max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto md:mx-0">
+                Ваша поддержка помогает нам продолжать проект «Мы как все» и менять жизни детей к лучшему.
+              </p>
+            </div>
+
+            <div className="md:col-span-5 flex justify-center w-full">
+              <div className="bg-white p-6 sm:p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col items-center justify-center w-full max-w-sm">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3">Оплата по QR-коду</span>
+                
+                {/*  SVG QR representation replaced with a beautiful placeholder */}
+                <div className="relative bg-white p-4 rounded-2xl shadow-md border border-slate-200/40 w-52 h-52 flex items-center justify-center">
+                  <img 
+                    src="/qr-code.png" 
+                    alt="QR Код для оплаты" 
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+
+                <a 
+                  href="https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full mt-5 py-3 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs h-11 flex items-center justify-center gap-2 shadow-lg shadow-purple-200 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                >
+                  <CreditCard size={15} />
+                  <span>Оплата ЕРИП</span>
+                  <ArrowUpRight size={13} />
+                </a>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-stretch">
+            {/* 1. ERIP Card */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="order-1 md:order-1 lg:order-1 col-span-1 md:col-span-2 lg:col-span-8 bg-white rounded-[2.5rem] p-5 sm:p-8 md:p-12 border border-slate-100 shadow-xl relative overflow-hidden group flex flex-col"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Banknote size={160} />
+              </div>
+              
+              <h2 className="text-3xl font-headline font-black text-slate-900 mb-8 flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center">
+                  <CreditCard size={24} />
+                </div>
+                Система ЕРИП
+              </h2>
+              
+              <div className="bg-purple-50 rounded-3xl p-5 sm:p-8 border border-purple-100 mb-8 flex-1">
+                <h3 className="font-bold text-purple-900 mb-4 text-base sm:text-lg">Инструкция по оплате в системе «Расчёт» (ЕРИП):</h3>
+                <div className="space-y-4 text-slate-700">
+                  <div className="flex items-start gap-3 sm:gap-4 text-left">
+                    <div className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center font-black shrink-0 shadow-sm border border-purple-100 text-sm mt-0.5">1</div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-normal pt-1">Выберите пункт «Благотворительность, общественные объединения»</p>
+                  </div>
+                  <div className="flex items-start gap-3 sm:gap-4 text-left">
+                    <div className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center font-black shrink-0 shadow-sm border border-purple-100 text-sm mt-0.5">2</div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-normal pt-1">Выберите «Помощь детям, взрослым»</p>
+                  </div>
+                  <div className="flex items-start gap-3 sm:gap-4 text-left">
+                    <div className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center font-black shrink-0 shadow-sm border border-purple-100 text-sm mt-0.5">3</div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-normal pt-1">Найдите «Свободное пространство»</p>
+                  </div>
+                  <div className="flex items-start gap-3 sm:gap-4 text-left">
+                    <div className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center font-black shrink-0 shadow-sm border border-purple-100 text-sm mt-0.5">4</div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-normal pt-1">Выберите «Благотворительные взносы» → «Мы как все»</p>
+                  </div>
+                  <div className="flex items-start gap-3 sm:gap-4 text-left">
+                    <div className="w-8 h-8 rounded-full bg-white text-purple-600 flex items-center justify-center font-black shrink-0 shadow-sm border border-purple-100 text-sm mt-0.5">5</div>
+                    <p className="text-sm sm:text-base text-slate-700 leading-normal pt-1">Введите Ф.И.О. и сумму пожертвования</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-slate-500 text-sm leading-relaxed italic">
+                * Оплата осуществляется через банковские отделения, инфокиоски, банкоматы или приложения интернет-банкинга.
+              </p>
+            </motion.div>
+
+            {/* 2. О нас Card */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="order-3 md:order-3 lg:order-2 col-span-1 md:col-span-1 lg:col-span-4 bg-white rounded-[2.5rem] p-5 sm:p-8 border border-slate-100 shadow-lg flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-200">
+                    <Info size={24} />
+                  </div>
+                  <h3 className="text-xl font-headline font-black text-slate-950">О нас</h3>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex gap-4">
+                    <User className="text-slate-300 shrink-0" size={20} />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Директор</p>
+                      <p className="text-slate-900 font-bold text-sm">Алексеевич Наталья Викторовна</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <MapPin className="text-slate-300 shrink-0" size={20} />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Адрес</p>
+                      <p className="text-slate-900 font-bold text-sm leading-tight">246014, Гомель, ул. Дзержинского 11а</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <Phone className="text-slate-300 shrink-0" size={20} />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Телефоны</p>
+                      <p className="text-slate-900 font-bold text-sm leading-tight">+375 44 756-66-05 (A1)</p>
+                      <p className="text-slate-900 font-bold text-sm leading-tight">+375 29 865-70-70</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <Mail className="text-slate-300 shrink-0" size={20} />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">E-mail</p>
+                      <p className="text-slate-900 font-bold text-sm">mi.kak.vse.gomel@gmail.com</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 3. Bank Details Card */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="order-2 md:order-2 lg:order-3 col-span-1 md:col-span-2 lg:col-span-8 bg-white rounded-[2.5rem] p-5 sm:p-8 md:p-12 border border-slate-100 shadow-xl flex flex-col"
+            >
+              <h2 className="text-3xl font-headline font-black text-slate-900 mb-8 flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                  <Banknote size={24} />
+                </div>
+                Банковский перевод
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-x-8 gap-y-8 mb-10">
+                {/* Row 1 */}
+                <div className="group">
+                  <span className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Получатель</span>
+                  <p className="text-slate-900 font-bold leading-tight">ЧСБУ «Свободное пространство»</p>
+                </div>
+                <div>
+                  <span className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Банк</span>
+                  <p className="text-slate-900 font-bold leading-tight">ОАО «Технобанк», Региональное управление №3, г. Гомель</p>
+                </div>
+
+                {/* Row 2 */}
+                <div className="group relative">
+                  <span className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1">УНП</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-slate-800 font-mono font-bold bg-slate-50 px-3 py-1 rounded-lg text-sm">
+                      491338987
+                    </code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('491338987');
+                        alert('УНП скопирован в буфер обмена');
+                      }}
+                      className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
+                      title="Скопировать УНП"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  </div>
+                </div>
+                <div className="group relative">
+                  <span className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1">БИК (SWIFT)</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-slate-800 font-mono font-bold bg-slate-50 px-3 py-1 rounded-lg text-sm">
+                      TECNBY22
+                    </code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('TECNBY22');
+                        alert('БИК скопирован в буфер обмена');
+                      }}
+                      className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
+                      title="Скопировать БИК"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 3 */}
+                <div className="group relative max-w-full">
+                  <span className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Благотворительный счет</span>
+                  <div className="flex items-center gap-2">
+                    <code className="text-emerald-600 font-mono font-bold bg-emerald-50 px-3 py-1 rounded-lg text-sm break-all">
+                      BY69TECN31356413000000000010
+                    </code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('BY69TECN31356413000000000010');
+                        alert('Счет скопирован в буфер обмена');
+                      }}
+                      className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
+                      title="Скопировать счет"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <span className="block text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Назначение платежа</span>
+                  <p className="text-slate-900 font-bold italic text-sm">«Оплата благотворительного вклада в проект «Мы как все»</p>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+                <div className="w-36 h-36 sm:w-44 sm:h-44 bg-white p-3 rounded-2xl shadow-md border border-slate-100 shrink-0 flex items-center justify-center">
+                  <img 
+                    src="/qr-code.png" 
+                    alt="Бортовой QR" 
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="text-center sm:text-left">
+                  <h4 className="font-headline font-black text-slate-900 mb-1 text-sm sm:text-base">Быстрая оплата по QR</h4>
+                  <p className="text-slate-500 text-[11px] xs:text-xs leading-normal sm:leading-relaxed max-w-sm">
+                    Откройте приложение вашего банка и отсканируйте код для автоматического заполнения реквизитов.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 4. Документы Card */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="order-4 md:order-4 lg:order-4 col-span-1 md:col-span-1 lg:col-span-4 bg-emerald-50 text-emerald-950 rounded-[2.5rem] p-5 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between border border-emerald-100/80"
+            >
+              <div>
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-200/20 rounded-full blur-3xl" />
+                <h3 className="text-xl font-headline font-black mb-6 relative z-10 text-emerald-900">Документы</h3>
+                
+                <div className="space-y-3 relative z-10">
+                  <button className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group">
+                    <div className="flex items-center gap-3">
+                      <FileText size={20} className="text-emerald-600" />
+                      <span className="text-sm font-extrabold text-emerald-900">Устав учреждения</span>
+                    </div>
+                    <Download size={16} className="text-emerald-600 opacity-60 group-hover:opacity-100 transition-all" />
+                  </button>
+                  <button className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group">
+                    <div className="flex items-center gap-3">
+                      <FileText size={20} className="text-emerald-600" />
+                      <span className="text-sm font-extrabold text-emerald-900">Свидетельство</span>
+                    </div>
+                    <Download size={16} className="text-emerald-600 opacity-60 group-hover:opacity-100 transition-all" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    ) : activeMainSection === 'projects' ? (
+      <section className="pt-8 pb-16 sm:py-20 bg-white min-h-screen relative overflow-hidden">
+        {/* Green-yellow glowing gradient in the top-left corner */}
+        <div className="absolute -top-48 -left-48 w-[550px] h-[550px] rounded-full bg-gradient-to-br from-emerald-400/45 via-emerald-300/30 to-yellow-300/45 blur-[100px] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-16"
+          >
+            <div className="flex flex-col sm:items-start xl:flex-row xl:items-center justify-between gap-4 xl:gap-8 mb-8 xl:mb-12 pt-3 sm:pt-0">
+              <h1 className="text-[36px] xs:text-[42px] sm:text-[52px] md:text-6xl xl:text-7xl font-headline font-black text-slate-900 tracking-tighter whitespace-nowrap leading-none pb-1 text-center sm:text-left w-full xl:w-auto">Наши проекты</h1>
+              
+              {isAdmin && (
+                <div className="flex flex-row items-center justify-center sm:justify-start xl:justify-end gap-2 sm:gap-4 w-full xl:w-auto shrink-0 animate-fadeIn">
+                  <button 
+                    onClick={() => {
+                      setEditingProjectId(null);
+                      setNewProject({
+                        title: '',
+                        category: 'Новости',
+                        excerpt: '',
+                        content: '',
+                        image: '',
+                        gallery: [] as string[],
+                        videoUrl: ''
+                      });
+                      setAddProjectError(null);
+                      setIsAddProjectOpen(true);
+                    }}
+                    className="flex-1 xl:flex-initial flex items-center justify-center gap-1 sm:gap-3 px-3 py-2.5 sm:px-8 sm:py-4 bg-emerald-600 text-white rounded-2xl sm:rounded-3xl font-black text-xs sm:text-base shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
+                  >
+                    <Plus size={16} /> Добавить новость
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex-none flex items-center justify-center gap-1.5 sm:gap-3 px-4 py-2.5 sm:px-8 sm:py-4 bg-slate-100 text-slate-700 rounded-2xl sm:rounded-3xl font-black text-xs sm:text-base hover:bg-slate-200 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
+                  >
+                    Выйти
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Search and Filters */}
+            <div className="space-y-4 mb-12">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-between bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 shadow-sm font-bold">
+                <div className="relative w-full sm:flex-1 md:max-w-md">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <input 
+                    type="text"
+                    aria-label="Поиск по новостям и проектам"
+                    placeholder="Поиск по новостям..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/50 transition-all font-bold text-slate-900 text-base sm:text-lg"
+                  />
+                </div>
+                
+                {/* Categories Dropdown Filter - Right side of Search for all formats */}
+                <div className="w-full sm:w-64 relative shrink-0">
+                  <select 
+                    value={activeCategory}
+                    aria-label="Фильтр по категориям"
+                    onChange={(e) => setActiveCategory(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-4 pr-10 outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 focus-visible:ring-purple-500/50 font-black text-slate-700 text-base sm:text-lg appearance-none cursor-pointer"
+                  >
+                    {['Все', 'Новости', 'Мероприятия', 'Отчеты', 'Сборы'].map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Date and Sort Filters */}
+              {/* Outer container: single row on lg (desktop), stacked on sm/md (tablet/mobile) */}
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-center lg:justify-between w-full bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100/50 shadow-sm">
+                {/* Row 1/Left Side: Date Range Interval */}
+                <div className="flex flex-row items-center justify-center gap-3 sm:gap-4 w-full lg:w-auto text-center flex-wrap">
+                  <div className="hidden sm:flex items-center justify-center gap-2 text-slate-400 text-xs sm:text-sm md:text-base font-black uppercase tracking-widest shrink-0">
+                    <Filter size={14} /> <span className="whitespace-nowrap">Промежуток:</span>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-2 flex-wrap">
+                    <input 
+                      type="date" 
+                      value={startDate}
+                      aria-label="С даты"
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs sm:text-base font-bold text-slate-700 outline-none focus:border-purple-500/30 focus-visible:ring-2 focus-visible:ring-purple-500 w-[115px] sm:w-[150px] shrink-0"
+                    />
+                    <span className="text-slate-300">—</span>
+                    <input 
+                      type="date" 
+                      value={endDate}
+                      aria-label="По дату"
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs sm:text-base font-bold text-slate-700 outline-none focus:border-purple-500/30 focus-visible:ring-2 focus-visible:ring-purple-500 w-[115px] sm:w-[150px] shrink-0"
+                    />
+                    {(startDate || endDate) && (
+                      <button 
+                        onClick={() => { setStartDate(''); setEndDate(''); }}
+                        className="text-xs sm:text-base font-bold text-purple-600 hover:text-purple-700 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-550 shrink-0 whitespace-nowrap ml-1"
+                      >
+                        Сбросить
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2/Right Side: Sort Order buttons group */}
+                <div className="flex flex-row gap-2 w-full lg:w-auto justify-center">
+                  <button 
+                    onClick={() => setSortOrder('newest')}
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-base font-black transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 whitespace-nowrap ${
+                      sortOrder === 'newest' 
+                        ? 'bg-slate-900 text-white shadow-md' 
+                        : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Calendar size={14} /> Сначала новые
+                  </button>
+                  <button 
+                    onClick={() => setSortOrder('oldest')}
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-base font-black transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 whitespace-nowrap ${
+                      sortOrder === 'oldest' 
+                        ? 'bg-slate-900 text-white shadow-md' 
+                        : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Calendar size={14} /> Сначала старые
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* News Feed */}
+          {news.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 font-bold text-lg">
+              Публикаций нет
+            </div>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {news
+                  .filter(item => {
+                    const matchesCategory = activeCategory === 'Все' || item.category === activeCategory;
+                    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                        item.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+                    
+                    const itemDate = new Date(item.date).getTime();
+                    const start = startDate ? new Date(startDate).getTime() : -Infinity;
+                    const end = endDate ? new Date(endDate).getTime() : Infinity;
+                    const matchesDate = itemDate >= start && itemDate <= end;
+
+                    return matchesCategory && matchesSearch && matchesDate;
+                  })
+                  .sort((a, b) => {
+                    const dateA = new Date(a.date).getTime();
+                    const dateB = new Date(b.date).getTime();
+                    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+                  })
+                  .map((item, i) => (
+                    <motion.article 
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      onClick={() => setSelectedNews(item)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedNews(item);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Проект: ${item.title}. Категория: ${item.category}. Дата публикации: ${item.displayDate}. Нажмите Enter или Пробел для подробной информации.`}
+                      className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 transition-all overflow-hidden flex flex-col h-full cursor-pointer"
+                    >
+                      <div className="relative h-56 overflow-hidden">
+                        <img 
+                          src={item.image} 
+                          alt={item.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-4 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-[10px] font-black uppercase tracking-wider text-purple-600 shadow-sm border border-white">
+                            {item.category}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-8 flex flex-col flex-1">
+                        <div className="flex items-center gap-2 text-slate-400 text-xs mb-4">
+                          <Calendar size={14} />
+                          <span className="font-bold">{item.displayDate}</span>
+                        </div>
+                        <h3 className="text-xl font-headline font-black text-slate-900 mb-4 leading-tight group-hover:text-purple-600 transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1 line-clamp-3">
+                          {item.excerpt}
+                        </p>
+                        <div className="inline-flex items-center gap-2 text-purple-600 font-black text-sm uppercase tracking-wider group-hover:gap-4 transition-all">
+                          Подробнее <ArrowRight size={16} />
+                        </div>
+                      </div>
+                    </motion.article>
+                  ))}
+              </div>
+
+              {news.filter(item => 
+                (activeCategory === 'Все' || item.category === activeCategory) &&
+                (item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
+              ).length === 0 && (
+                <div className="text-center py-20">
+                  <div className="text-slate-300 mb-4 flex justify-center">
+                    <Search size={64} strokeWidth={1} />
+                  </div>
+                  <h3 className="text-xl font-headline font-bold text-slate-900 mb-2">Ничего не найдено</h3>
+                  <p className="text-slate-500">Попробуйте изменить параметры поиска или фильтры</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+    ) : activeMainSection === 'get_help' ? (
+      <section className="py-12 bg-slate-50 min-h-screen relative overflow-hidden">
+        {/* Soft, beautiful sunset-orange gradient with a light red edge - brighter but smaller diameter */}
+        <div className="absolute -top-24 -left-24 w-[220px] sm:w-[280px] h-[220px] sm:h-[280px] rounded-full bg-gradient-to-br from-red-500/25 via-orange-400/35 to-transparent blur-[50px] pointer-events-none z-0" />
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 md:mb-12 text-center"
+          >
+            <h1 className="text-[32px] xs:text-[38px] sm:text-[48px] md:text-7xl font-headline font-black text-slate-900 mb-4 tracking-tighter">Получить помощь</h1>
+            <p className="text-sm sm:text-base md:text-lg text-slate-500 max-w-2xl mx-auto text-left sm:text-center leading-relaxed">
+              Мы оказываем всестороннюю поддержку семьям, воспитывающим детей с особенностями развития. Заполните форму, и мы свяжемся с вами.
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+            {/* Request Form */}
+            <div className="lg:col-span-8 space-y-8 flex flex-col">
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-lg flex-1"
+              >
+                <HelpRequestForm />
+              </motion.div>
+            </div>
+
+            {/* Sidebar Instructions / FAQ */}
+            <div className="lg:col-span-4 space-y-6 flex flex-col">
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg"
+              >
+                <h3 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Полезная информация</h3>
+                <div className="space-y-6 text-sm text-slate-600">
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Кто может получить помощь?</h4>
+                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Какие документы нужны?</h4>
+                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Как быстро рассматривается заявка?</h4>
+                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-emerald-50 text-emerald-950 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden border border-emerald-100/80"
+              >
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-200/20 rounded-full blur-3xl" />
+                <h3 className="text-xl font-headline font-black mb-4 relative z-10 text-emerald-900">Свяжитесь напрямую</h3>
+                <div className="space-y-4 font-bold relative z-10">
+                  <div className="space-y-2">
+                    <a href="tel:+375447566605" className="block text-emerald-950 hover:text-emerald-600 transition-colors text-base md:text-lg">
+                      +375 44 756-66-05 (A1)
+                    </a>
+                    <a href="tel:+375298657070" className="block text-emerald-950 hover:text-emerald-600 transition-colors text-base md:text-lg">
+                      +375 29 865-70-70
+                    </a>
+                  </div>
+                  <div className="text-sm font-medium text-emerald-700 border-t border-emerald-200/60 pt-3 opacity-90">
+                    <a href="mailto:mi.kak.vse.gomel@gmail.com" className="hover:text-emerald-950 transition-colors block">
+                      mi.kak.vse.gomel@gmail.com
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <section className="py-20 text-center px-6">
+        <h1 className="text-4xl font-headline font-black text-slate-900 mb-4">Страница в разработке</h1>
+        <button 
+          onClick={() => setActiveMainSection('home')}
+          className="text-purple-600 font-bold hover:underline"
+        >
+          Вернуться на главную
+        </button>
+      </section>
+    )}
+  </main>
+
+      <footer className="bg-slate-50 border-t border-slate-200/80 text-slate-755 relative overflow-hidden">
+        {/* Subtle decorative background glow */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-100/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-10 w-64 h-64 bg-amber-100/10 rounded-full blur-2xl pointer-events-none" />
+        
+        {/* Large background Mother and Child logo serving as an elegant watermark background */}
+        <div className="absolute right-0 bottom-0 w-[180px] h-[180px] xs:w-[220px] xs:h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] text-purple-900 pointer-events-none z-0 translate-x-4 translate-y-4 select-none">
+          <MotherChildIcon className="w-full h-full flex items-center justify-center" imgClassName="w-full h-full object-contain" />
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start text-sm">
+            
+            {/* Column 1: Institution details */}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="font-headline font-black text-slate-900 leading-tight">
+                  ЧСБУ «Свободное пространство»
+                </h3>
+                <p className="text-xs text-slate-500 font-bold leading-none w-full">
+                  Частное социально-благотворительное учреждение
+                </p>
+              </div>
+              
+              <div className="text-xs text-slate-600 space-y-2 font-medium">
+                <div>
+                  <span className="text-slate-400 font-bold">Директор:</span>{' '}
+                  <span className="text-slate-900 font-bold">Алексеевич Наталья Викторовна</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold">УНП:</span>{' '}
+                  <span className="text-slate-900 font-bold select-all">491338987</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-slate-400 font-bold shrink-0">Адрес:</span>{' '}
+                  <span className="text-slate-700 font-bold leading-tight">
+                    246014, Республика Беларусь, г. Гомель, ул. Дзержинского 11а
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Quick Help & Phones */}
+            <div className="space-y-3.5">
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                  Быстрая помощь А1
+                </span>
+                <div className="text-xs font-bold space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 text-xs font-medium">USSD-запрос:</span>
+                    <div className="flex items-center gap-1">
+                      <a
+                        href="tel:*222*75%23"
+                        onClick={() => {
+                          navigator.clipboard.writeText('*222*75#');
+                          setCopiedFooterUssd(true);
+                          setTimeout(() => setCopiedFooterUssd(false), 2000);
+                        }}
+                        className="text-purple-700 bg-purple-55 hover:bg-purple-100/80 active:scale-95 px-1.5 py-0.5 rounded-lg select-all font-mono font-black text-xs whitespace-nowrap transition-all flex items-center gap-1 border border-purple-100/60"
+                        title="Нажмите, чтобы набрать или скопировать"
+                      >
+                        *222*75#
+                        <Copy size={9} className="text-purple-400 shrink-0" />
+                      </a>
+                      {copiedFooterUssd && (
+                        <span className="text-[9px] text-emerald-600 font-bold font-sans animate-pulse">
+                          Скопировано!
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 text-xs font-medium">По SMS на:</span>
+                    <div className="flex items-center gap-1">
+                      <a
+                        href="sms:2275"
+                        onClick={() => {
+                          navigator.clipboard.writeText('2275');
+                          setCopiedFooterSms(true);
+                          setTimeout(() => setCopiedFooterSms(false), 2000);
+                        }}
+                        className="text-purple-700 bg-purple-55 hover:bg-purple-100/80 active:scale-95 px-1.5 py-0.5 rounded-lg select-all font-mono font-black text-xs transition-all flex items-center gap-1 border border-purple-100/60"
+                        title="Нажмите, чтобы отправить SMS или скопировать"
+                      >
+                        2275
+                        <Copy size={9} className="text-purple-400 shrink-0" />
+                      </a>
+                      {copiedFooterSms && (
+                        <span className="text-[9px] text-emerald-600 font-bold font-sans animate-pulse">
+                          Скопировано!
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 font-bold text-xs pt-1">
+                <a href="tel:+375447566605" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                  <Phone size={14} className="text-purple-500 shrink-0" />
+                  <span>+375 (44) 756-66-05 <span className="text-[10px] font-black text-purple-600 font-sans">А1</span></span>
+                </a>
+                <a href="tel:+375298657070" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                  <Phone size={14} className="text-purple-500 shrink-0" />
+                  <span>+375 (29) 865-70-70</span>
+                </a>
+                <a href="mailto:mi.kak.vse.gomel@gmail.com" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors select-all">
+                  <Mail size={14} className="text-purple-500 shrink-0" />
+                  <span className="truncate">mi.kak.vse.gomel@gmail.com</span>
+                </a>
+                <a href="https://instagram.com/mi_kak_vse_gomel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                  <Instagram size={14} className="text-purple-500 shrink-0" />
+                  <span>@mi_kak_vse_gomel</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Copyright and Logos row (NO TOP LINE DIVIDER) */}
+          <div className="mt-8 pt-4 flex flex-row items-center justify-between gap-2.5 sm:gap-5">
+            
+            {/* Copyright block with Logo aligned to its left */}
+            <div className="flex-1 flex items-center gap-2.5 sm:gap-3 text-slate-400 text-[8px] xs:text-[10px] sm:text-xs font-bold leading-tight">
+              {/* Logo inside a compact frame, to the left of the copyright */}
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white p-0.5 rounded-lg sm:rounded-xl shadow-sm border border-slate-100 hover:border-purple-200 transition-colors shrink-0">
+                <OrganizationLogo />
+              </div>
+              <span>
+                © {new Date().getFullYear()} Проект «Мы как все» / ЧСБУ «Свободное пространство». Все права защищены.
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </footer>
+
+      {/* Detailed News View Modal */}
+      <AnimatePresence>
+        {selectedNews && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="news-modal-title"
+              className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden relative shadow-2xl flex flex-col"
+            >
+              <button 
+                onClick={() => setSelectedNews(null)}
+                aria-label="Закрыть подробную информацию"
+                className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-900 shadow-lg hover:bg-white transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 group"
+              >
+                <X size={24} className="group-hover:rotate-90 transition-transform" />
+              </button>
+
+              <div className="overflow-y-auto w-full">
+                <div 
+                  className="relative h-64 md:h-96 cursor-pointer group/hero overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Просмотреть главное изображение во весь экран"
+                  onClick={() => {
+                    const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                    if (allImages.length > 0) {
+                      setLightboxImageIndex(0);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                      if (allImages.length > 0) {
+                        setLightboxImageIndex(0);
+                      }
+                    }
+                  }}
+                >
+                  <img 
+                    src={selectedNews.image} 
+                    alt={selectedNews.title}
+                    className="w-full h-full object-cover group-hover/hero:scale-105 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute top-4 left-4 z-10 w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover/hero:opacity-100 transition-opacity">
+                    <Maximize2 size={16} />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8 md:p-12">
+                    <div className="mt-auto">
+                      <span className="px-4 py-1.5 bg-purple-600 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-lg mb-4 inline-block">
+                        {selectedNews.category}
+                      </span>
+                      <h2 id="news-modal-title" className="text-3xl md:text-5xl font-headline font-black text-white leading-tight">
+                        {selectedNews.title}
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 md:p-12">
+                  <div className="flex items-center gap-2 text-slate-400 text-sm mb-8">
+                    <Calendar size={18} />
+                    <span className="font-bold">{selectedNews.displayDate}</span>
+                  </div>
+
+                  <div className="prose prose-slate max-w-none mb-12">
+                    {selectedNews.content?.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx} className="text-slate-600 text-lg leading-relaxed mb-6">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+
+                  {selectedNews.gallery && selectedNews.gallery.length > 0 && (
+                    <div className="mb-12">
+                      <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Фотогалерея</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {selectedNews.gallery.map((img, idx) => {
+                          const openGalleryImage = () => {
+                            const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                            const indexInAll = allImages.indexOf(img);
+                            if (indexInAll !== -1) {
+                              setLightboxImageIndex(indexInAll);
+                            } else {
+                              setLightboxImageIndex(idx + 1);
+                            }
+                          };
+                          return (
+                            <div 
+                              key={idx} 
+                              onClick={openGalleryImage}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  openGalleryImage();
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Просмотреть фотографию ${idx + 1}`}
+                              className="aspect-square rounded-3xl overflow-hidden shadow-sm cursor-pointer group/gal relative focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50"
+                            >
+                              <img src={img} alt={`Фото из галереи ${idx + 1}`} className="w-full h-full object-cover group-hover/gal:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                              <div className="absolute inset-0 bg-black/0 hover:bg-black/30 group-focus-visible/gal:bg-black/30 flex items-center justify-center transition-colors duration-300">
+                                <Maximize2 className="text-white opacity-0 group-hover/gal:opacity-100 group-focus-visible/gal:opacity-100 transition-opacity" size={20} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedNews.videoUrl && (
+                    <div className="mb-8">
+                      <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Видео</h4>
+                      <div className="aspect-video w-full rounded-[2.5rem] overflow-hidden shadow-xl bg-slate-900">
+                        <iframe 
+                          className="w-full h-full"
+                          src={selectedNews.videoUrl}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    </div>
+                  )}
+
+                  {isAdmin && (
+                    <div className="mt-12 pt-8 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:max-w-xl sm:ml-auto">
+                      <button
+                        onClick={() => {
+                          setEditingProjectId(selectedNews.id);
+                          setNewProject({
+                            title: selectedNews.title || '',
+                            category: selectedNews.category || 'Новости',
+                            excerpt: selectedNews.excerpt || '',
+                            content: selectedNews.content || '',
+                            image: selectedNews.image || '',
+                            gallery: selectedNews.gallery || [],
+                            videoUrl: selectedNews.videoUrl || ''
+                          });
+                          setSelectedNews(null);
+                          setIsAddProjectOpen(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-6 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl shadow-lg shadow-purple-200 hover:shadow-xl transition-all hover:scale-105 cursor-pointer w-full"
+                      >
+                        <Edit2 size={18} /> <span className="whitespace-nowrap">Редактировать новость</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDeleteError(null);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl shadow-lg shadow-rose-200 hover:shadow-xl transition-all hover:scale-105 cursor-pointer w-full"
+                      >
+                        <Trash2 size={18} /> <span className="whitespace-nowrap">Удалить новость</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Photo Lightbox */}
+      <AnimatePresence>
+        {lightboxImageIndex !== null && selectedNews && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none"
+            onClick={() => setLightboxImageIndex(null)}
+          >
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxImageIndex(null);
+              }}
+              className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-full flex items-center justify-center transition-all group cursor-pointer"
+            >
+              <X size={24} className="group-hover:rotate-90 transition-transform" />
+            </button>
+
+            {/* Main content container */}
+            <div className="relative w-full max-w-5xl aspect-[3/2] flex items-center justify-center max-h-[75vh]" onClick={(e) => e.stopPropagation()}>
+              {(() => {
+                const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                const currentImg = allImages[lightboxImageIndex] || selectedNews.image;
+
+                const prevIndex = (lightboxImageIndex - 1 + allImages.length) % allImages.length;
+                const nextIndex = (lightboxImageIndex + 1) % allImages.length;
+
+                return (
+                  <>
+                    {/* Left arrow */}
+                    {allImages.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxImageIndex(prevIndex);
+                        }}
+                        className="absolute left-2 sm:left-4 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 sm:w-14 sm:h-14 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm cursor-pointer"
+                        aria-label="Previous"
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                    )}
+
+                    {/* Image frame */}
+                    <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+                      <motion.img
+                        key={lightboxImageIndex}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        src={currentImg}
+                        alt={`Photo view ${lightboxImageIndex + 1}`}
+                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+
+                    {/* Right arrow */}
+                    {allImages.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxImageIndex(nextIndex);
+                        }}
+                        className="absolute right-2 sm:right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 sm:w-14 sm:h-14 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm cursor-pointer"
+                        aria-label="Next"
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                    )}
+
+                    {/* Pagination Indicator / Description */}
+                    <div className="absolute bottom-[-45px] sm:bottom-[-60px] left-1/2 -translate-x-1/2 text-center text-white/80 font-bold backdrop-blur-md bg-white/5 py-1.5 px-4 rounded-full border border-white/10 text-xs sm:text-sm whitespace-nowrap">
+                      Фото {lightboxImageIndex + 1} из {allImages.length}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Background Blur Overlay for widget */}
+      <AnimatePresence>
+        {isOwlOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsOwlOpen(false)}
+            className="fixed inset-0 bg-slate-900/5 backdrop-blur-sm z-[90]"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Admin Login Modal */}
+      <AnimatePresence>
+        {isLoginOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full blur-3xl -mr-16 -mt-16" />
+              
+              <button 
+                onClick={() => setIsLoginOpen(false)}
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="text-center mb-6 relative">
+                <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                  <Lock size={32} />
+                </div>
+                <h2 className="text-3xl font-headline font-black text-slate-900">Админ-панель</h2>
+                <p className="text-slate-500 text-sm mt-1 font-bold">Управление проектами и новостями фонда</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4 relative">
+                <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Электронная почта</label>
+                  <input 
+                    type="email"
+                    required
+                    disabled={isAuthLoading}
+                    value={loginForm.username}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 transition-all outline-none font-bold disabled:opacity-50"
+                    placeholder="example@domain.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Пароль</label>
+                  <input 
+                    type="password"
+                    required
+                    disabled={isAuthLoading}
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 transition-all outline-none font-bold disabled:opacity-50"
+                    placeholder="Пароль"
+                  />
+                </div>
+                {loginError && <p className="text-rose-600 text-sm font-bold text-center leading-snug">{loginError}</p>}
+                
+                <button 
+                  type="submit"
+                  disabled={isAuthLoading}
+                  className="w-full bg-purple-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-purple-200 hover:bg-purple-700 transition-all mt-4 uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isAuthLoading ? 'Загрузка...' : 'Войти'}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {isDeleteConfirmOpen && selectedNews && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl w-full max-w-md border border-slate-100/80 text-center relative"
+            >
+              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-2xl font-headline font-black text-slate-900 mb-3">
+                Удалить публикацию?
+              </h3>
+              <p className="text-slate-500 text-sm font-bold leading-relaxed mb-6">
+                Вы действительно хотите навсегда удалить публикацию <span className="text-slate-800 font-extrabold font-headline">«{selectedNews.title}»</span>? Это действие необратимо.
+              </p>
+
+              {deleteError && (
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 text-xs font-bold leading-relaxed text-left">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    setIsDeleting(true);
+                    setDeleteError(null);
+                    const projectsPath = 'projects';
+                    try {
+                      await deleteDoc(doc(db, projectsPath, String(selectedNews.id)));
+                      setIsDeleteConfirmOpen(false);
+                      setSelectedNews(null);
+                    } catch (error: any) {
+                      console.error("Deletion error:", error);
+                      const isPermissionErr = error.message?.toLowerCase().includes('permission') || 
+                                              error.code === 'permission-denied';
+                      if (isPermissionErr) {
+                        setDeleteError(
+                          'Ошибка доступа: У вашей учетной записи недостаточно прав в Firestore. Пожалуйста, убедитесь, что в Firebase Console во вкладке Rules обновлены правила доступа.'
+                        );
+                      } else {
+                        setDeleteError(`Ошибка удаления: ${error.message || error}`);
+                      }
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
+                  className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl shadow-lg shadow-rose-200 hover:shadow-xl transition-all hover:scale-105 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? 'Удаление...' : 'Да, удалить'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Project Modal */}
+      <AnimatePresence>
+        {isAddProjectOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 100 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <Plus size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-headline font-black text-slate-900">
+                      {editingProjectId ? 'Редактировать публикацию' : 'Новая публикация'}
+                    </h2>
+                    <p className="text-slate-500 text-sm font-bold">
+                      {editingProjectId ? 'Измените данные существующей записи' : 'Добавьте событие или новость для проекта «Мы как все»'}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsAddProjectOpen(false)}
+                  className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 md:p-12">
+                <form onSubmit={handleAddProject} className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Тип публикации</label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Новости', 'Мероприятия', 'Отчеты', 'Сборы'].map(cat => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setNewProject(prev => ({ ...prev, category: cat }))}
+                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                              newProject.category === cat 
+                                ? 'bg-purple-600 text-white shadow-lg' 
+                                : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Заголовок</label>
+                      <input 
+                        type="text"
+                        required
+                        value={newProject.title}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all"
+                        placeholder="Название мероприятия..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Краткое описание (для карточки)</label>
+                      <textarea 
+                        required
+                        value={newProject.excerpt}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, excerpt: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all resize-none"
+                        rows={3}
+                        placeholder="Кратко о чем новость..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Полный текст статьи</label>
+                      <textarea 
+                        required
+                        value={newProject.content}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, content: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all resize-none"
+                        rows={8}
+                        placeholder="Расскажите подробности..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Главное фото (Афиша)</label>
+                      <div className="relative group">
+                        <input 
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                        />
+                        <div className={`w-full aspect-video rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden ${
+                          newProject.image ? 'border-purple-500 bg-purple-50' : 'border-slate-200 bg-slate-50 hover:border-purple-400'
+                        }`}>
+                          {newProject.image ? (
+                            <img src={newProject.image} className="w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <Upload className="text-slate-300 mb-2" size={32} />
+                              <p className="text-xs font-black text-slate-400">Нажмите для загрузки</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Фотогалерея</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {newProject.gallery.map((img, idx) => (
+                          <div key={idx} className="aspect-square rounded-xl overflow-hidden relative group">
+                            <img src={img} className="w-full h-full object-cover" />
+                            <button 
+                              type="button"
+                              onClick={() => setNewProject(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== idx) }))}
+                              className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        <div className="aspect-square rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 relative flex items-center justify-center hover:border-purple-400 transition-colors">
+                          <input 
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleGalleryChange}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                          />
+                          <Plus className="text-slate-300" size={24} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Ссылка на видео (YouTube embed)</label>
+                      <input 
+                        type="text"
+                        value={newProject.videoUrl}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, videoUrl: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all"
+                        placeholder="https://www.youtube.com/embed/..."
+                      />
+                    </div>
+
+                    <div className="pt-6">
+                      {addProjectError && (
+                        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 text-xs font-bold leading-relaxed mb-4">
+                          {addProjectError}
+                        </div>
+                      )}
+                      <button 
+                        type="submit"
+                        disabled={isPublishing}
+                        className="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em] disabled:opacity-50 cursor-pointer"
+                      >
+                        {isPublishing ? 'Сохранение...' : editingProjectId ? 'Сохранить изменения' : 'Опубликовать'} <Check size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Owl Widget */}
+      {/* Centered Modal for Mobile */}
+      <AnimatePresence>
+        {isOwlOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none md:hidden">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-sm bg-white rounded-[2rem] shadow-2xl border border-orange-100 overflow-hidden relative pointer-events-auto"
+            >
+              {/* Background Glow inside widget */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full aspect-square bg-[radial-gradient(circle_at_50%_100%,#ea580c_0%,#fb923c_40%,#ffedd5_80%,transparent_100%)] blur-[60px] opacity-20" />
+              </div>
+
+              <div className="p-6 relative z-10">
+                <button 
+                  onClick={() => setIsOwlOpen(false)}
+                  className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+
+                <div className="flex flex-col items-center text-center">
+                  <Owl className="w-16 h-16 mb-4 drop-shadow-xl" />
+                  <h2 className="text-xl font-headline font-black text-slate-900 mb-1 tracking-tighter leading-tight">
+                    Поможем решить вопросы
+                  </h2>
+                  <p className="text-slate-500 text-xs font-bold mb-6">
+                    Наши волонтёры свяжутся с вами в ближайшее время.
+                  </p>
+
+                  <form noValidate onSubmit={handleSubmit} className="w-full space-y-3.5 text-left">
+                    <input 
+                      type="text" 
+                      name="name"
+                      placeholder="Имя" 
+                      required
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 transition-all outline-none"
+                    />
+                    <IMaskInput
+                      mask="+375 (00) 000-00-00"
+                      value={formData.phone}
+                      onAccept={(value: string) => setFormData(prev => ({ ...prev, phone: value }))}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 transition-all outline-none"
+                      placeholder="Телефон"
+                      type="tel"
+                      name="phone"
+                    />
+                    <input 
+                      type="email" 
+                      name="email"
+                      placeholder="Email" 
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 transition-all outline-none"
+                    />
+                    <motion.button 
+                      whileHover={{ scale: 1.01, backgroundColor: "#d97706" }}
+                      whileTap={{ scale: 0.99 }}
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`w-full bg-amber-600 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-amber-600/30 mt-2 text-sm uppercase tracking-[0.15em] ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {isSubmitting ? 'Отправка...' : 'Отправить'}
+                    </motion.button>
+                    {submitStatus === 'success' && (
+                      <p className="text-emerald-600 text-center text-xs font-bold mt-2">Сообщение отправлено!</p>
+                    )}
+                    {submitStatus === 'validation_error' && (
+                      <p className="text-rose-600 text-center text-xs font-bold mt-2">{validationError}</p>
+                    )}
+                    {submitStatus === 'error' && (
+                      <p className="text-rose-600 text-center text-xs font-bold mt-2">
+                        Ошибка при отправке. Попробуйте позже.
+                      </p>
+                    )}
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Trigger Button and Desktop Popover */}
+      <div className="fixed bottom-8 right-8 z-[180] flex items-end gap-6">
+        <AnimatePresence>
+          {isOwlOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9, x: 20 }}
+              className="hidden md:block w-full max-w-md bg-white rounded-[2rem] shadow-2xl shadow-orange-500/20 border border-orange-100 overflow-hidden relative"
+            >
+              {/* Background Glow inside widget */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full aspect-square bg-[radial-gradient(circle_at_50%_100%,#ea580c_0%,#fb923c_40%,#ffedd5_80%,transparent_100%)] blur-[60px] opacity-20" />
+              </div>
+
+              <div className="p-8 md:p-10 relative z-10">
+                <button 
+                  onClick={() => setIsOwlOpen(false)}
+                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+
+                <div className="flex flex-col items-center text-center">
+                  <Owl className="w-20 h-20 mb-6 drop-shadow-xl" />
+                  <h2 className="text-2xl md:text-3xl font-headline font-black text-slate-900 mb-2 tracking-tighter leading-tight">
+                    Поможем решить вопросы
+                  </h2>
+                  <p className="text-slate-500 text-sm md:text-base font-bold mb-8">
+                    Наши волонтёры свяжутся с вами в ближайшее время.
+                  </p>
+
+                  <form noValidate onSubmit={handleSubmit} className="w-full space-y-4 text-left">
+                    <input 
+                      type="text" 
+                      name="name"
+                      placeholder="Имя" 
+                      aria-label="Ваше имя"
+                      required
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 focus-visible:ring-amber-500/50 transition-all outline-none"
+                    />
+                    <IMaskInput
+                      mask="+375 (00) 000-00-00"
+                      value={formData.phone}
+                      onAccept={(value: string) => setFormData(prev => ({ ...prev, phone: value }))}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 focus-visible:ring-amber-500/50 transition-all outline-none"
+                      placeholder="Телефон"
+                      aria-label="Ваш номер телефона"
+                      type="tel"
+                      name="phone"
+                    />
+                    <input 
+                      type="email" 
+                      name="email"
+                      placeholder="Email" 
+                      aria-label="Ваш электронный адрес"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 focus-visible:ring-amber-500/50 transition-all outline-none"
+                    />
+                    <motion.button 
+                      whileHover={{ scale: 1.01, backgroundColor: "#d97706" }}
+                      whileTap={{ scale: 0.99 }}
+                      type="submit"
+                      disabled={isSubmitting}
+                      aria-label={isSubmitting ? 'Отправка запроса...' : 'Отправить запрос волонтёру'}
+                      className={`w-full bg-amber-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-amber-600/30 mt-2 text-base uppercase tracking-[0.15em] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-500/50 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {isSubmitting ? 'Отправка...' : 'Отправить'}
+                    </motion.button>
+                    {submitStatus === 'success' && (
+                      <p className="text-emerald-600 text-center text-sm font-bold mt-2">Сообщение отправлено!</p>
+                    )}
+                    {submitStatus === 'validation_error' && (
+                      <p className="text-rose-600 text-center text-sm font-bold mt-2">{validationError}</p>
+                    )}
+                    {submitStatus === 'error' && (
+                      <p className="text-rose-600 text-center text-sm font-bold mt-2">
+                        Ошибка при отправке. Попробуйте позже.
+                      </p>
+                    )}
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className={`relative group ${isOwlOpen ? 'hidden md:block' : 'block'}`}>
+          <motion.button
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={() => setIsOwlOpen(!isOwlOpen)}
+            aria-expanded={isOwlOpen}
+            aria-label={isOwlOpen ? "Закрыть окно помощника" : "Филин-помощник: задать вопрос волонтёру"}
+            layout
+            className={`h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 relative overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-500/50 ${
+              isOwlOpen ? 'w-16 bg-slate-900 text-white' : 'bg-amber-600 text-white hover:bg-amber-700 min-w-[64px]'
+            }`}
+          >
+            <div className="flex items-center px-4 gap-3">
+              {isOwlOpen ? (
+                <X size={32} />
+              ) : (
+                <>
+                  <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                    <AnimatePresence mode="wait">
+                      {currentIcon === 'owl' ? (
+                        <motion.div
+                          key="owl"
+                          initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                          exit={{ scale: 0, opacity: 0, rotate: 45 }}
+                        >
+                          <Owl className="w-8 h-8" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="msg"
+                          initial={{ scale: 0, opacity: 0, y: 10 }}
+                          animate={{ scale: 1, opacity: 1, y: 0 }}
+                          exit={{ scale: 0, opacity: 0, y: -10 }}
+                        >
+                          <MessageCircle size={28} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <AnimatePresence>
+                    {(isHovered && !isOwlOpen) && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="whitespace-nowrap font-black uppercase tracking-wider text-sm select-none overflow-hidden"
+                      >
+                        Задать вопрос
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
+            </div>
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+}

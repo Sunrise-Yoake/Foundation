@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "project": {
+      "title": "Project",
+      "description": "A news article, event, report, or fundraising collection published by the charitable foundation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the project" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "image": { "type": "string" },
+        "gallery": { "type": "array" },
+        "videoUrl": { "type": "string" },
+        "date": { "type": "string" },
+        "displayDate": { "type": "string" }
+      },
+      "required": ["title", "category", "excerpt", "content", "image", "date", "displayDate"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": "project",
+      "description": "Collection of charity news, events, and report projects"
+    }
+  }
+}
