@@ -9,7 +9,7 @@ export default async function handler(req: any, res: any) {
 
   if (!process.env.RESEND_API_KEY) {
     console.error("RESEND_API_KEY is not set.");
-    return res.status(500).json({ error: "Email service not configured" });
+    return res.status(550).json({ error: "Email service not configured" });
   }
 
   try {

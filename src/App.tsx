@@ -807,10 +807,13 @@ export default function App() {
           setSubmitStatus('idle');
         }, 3000);
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        setValidationError(errorData.error || `Ошибка сервера: ${response.status}`);
         setSubmitStatus('error');
       }
     } catch (error) {
       console.error('Submission error:', error);
+      setValidationError(error instanceof Error ? error.message : String(error));
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -2928,9 +2931,12 @@ export default function App() {
                       <p className="text-rose-600 text-center text-xs font-bold mt-2">{validationError}</p>
                     )}
                     {submitStatus === 'error' && (
-                      <p className="text-rose-600 text-center text-xs font-bold mt-2">
-                        Ошибка при отправке. Попробуйте позже.
-                      </p>
+                      <div className="text-rose-600 text-center text-xs font-bold mt-2">
+                        <p>Ошибка при отправке. Попробуйте позже.</p>
+                        {validationError && (
+                          <p className="text-[10px] font-normal mt-1 opacity-80">{validationError}</p>
+                        )}
+                      </div>
                     )}
                   </form>
                 </div>
@@ -3019,9 +3025,12 @@ export default function App() {
                       <p className="text-rose-600 text-center text-sm font-bold mt-2">{validationError}</p>
                     )}
                     {submitStatus === 'error' && (
-                      <p className="text-rose-600 text-center text-sm font-bold mt-2">
-                        Ошибка при отправке. Попробуйте позже.
-                      </p>
+                      <div className="text-rose-600 text-center text-sm font-bold mt-2">
+                        <p>Ошибка при отправке. Попробуйте позже.</p>
+                        {validationError && (
+                          <p className="text-xs font-normal mt-1 opacity-80">{validationError}</p>
+                        )}
+                      </div>
                     )}
                   </form>
                 </div>
