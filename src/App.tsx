@@ -315,7 +315,7 @@ function HelpRequestForm() {
         </div>
         <h3 className="text-3xl font-headline font-black text-slate-900 mb-4">Спасибо! Заявка принята</h3>
         <p className="text-slate-500 text-lg max-w-md mx-auto leading-relaxed mb-6">
-          Мы получили ваше обращение. Координаторы фонда свяжутся с вами по указанному номеру телефона в ближайшее время.
+          Мы получили ваше обращение. Волонтёры фонда свяжутся с вами в течение 14 рабочих дней.
         </p>
         <button 
           onClick={() => {
@@ -2033,7 +2033,7 @@ export default function App() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+          <div className="max-w-3xl mx-auto">
             {/* Request Form */}
             <div className="lg:col-span-8 space-y-8 flex flex-col">
               <motion.div 
@@ -2042,56 +2042,6 @@ export default function App() {
                 className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-lg flex-1"
               >
                 <HelpRequestForm />
-              </motion.div>
-            </div>
-
-            {/* Sidebar Instructions / FAQ */}
-            <div className="lg:col-span-4 space-y-6 flex flex-col">
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg"
-              >
-                <h3 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Полезная информация</h3>
-                <div className="space-y-6 text-sm text-slate-600">
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Кто может получить помощь?</h4>
-                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Какие документы нужны?</h4>
-                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 mb-1">Как быстро рассматривается заявка?</h4>
-                    <p className="text-amber-600 bg-amber-50 rounded-lg p-2.5 border border-amber-200/50 font-medium text-xs leading-relaxed">[Заполнитель: Текст ответа требует редактирования]</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-emerald-50 text-emerald-950 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden border border-emerald-100/80"
-              >
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-200/20 rounded-full blur-3xl" />
-                <h3 className="text-xl font-headline font-black mb-4 relative z-10 text-emerald-900">Свяжитесь напрямую</h3>
-                <div className="space-y-4 font-bold relative z-10">
-                  <div className="space-y-2">
-                    <a href="tel:+375447566605" className="block text-emerald-950 hover:text-emerald-600 transition-colors text-base md:text-lg">
-                      +375 44 756-66-05 (A1)
-                    </a>
-                    <a href="tel:+375298657070" className="block text-emerald-950 hover:text-emerald-600 transition-colors text-base md:text-lg">
-                      +375 29 865-70-70
-                    </a>
-                  </div>
-                  <div className="text-sm font-medium text-emerald-700 border-t border-emerald-200/60 pt-3 opacity-90">
-                    <a href="mailto:mi.kak.vse.gomel@gmail.com" className="hover:text-emerald-950 transition-colors block">
-                      mi.kak.vse.gomel@gmail.com
-                    </a>
-                  </div>
-                </div>
               </motion.div>
             </div>
           </div>
@@ -2114,11 +2064,11 @@ export default function App() {
         {/* Subtle decorative background glow */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-100/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-10 w-64 h-64 bg-amber-100/10 rounded-full blur-2xl pointer-events-none" />
-        
+
         {/* Large background Mother and Child logo serving as an elegant watermark background */}
-        <div className="absolute right-0 bottom-0 w-[180px] h-[180px] xs:w-[220px] xs:h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] text-purple-900 pointer-events-none z-0 translate-x-4 translate-y-4 select-none">
+        <div className="absolute right-0 bottom-[75px] w-[180px] h-[180px] xs:w-[220px] xs:h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] text-purple-900 pointer-events-none z-0 translate-x-4 translate-y-4 select-none">
           <MotherChildIcon className="w-full h-full flex items-center justify-center" imgClassName="w-full h-full object-contain" />
-        </div>
+        </div>  
         <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start text-sm">
             
@@ -2207,23 +2157,24 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="space-y-2 font-bold text-xs pt-1">
-                <a href="tel:+375447566605" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
-                  <Phone size={14} className="text-purple-500 shrink-0" />
-                  <span>+375 (44) 756-66-05 <span className="text-[10px] font-black text-purple-600 font-sans">А1</span></span>
-                </a>
-                <a href="tel:+375298657070" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
-                  <Phone size={14} className="text-purple-500 shrink-0" />
-                  <span>+375 (29) 865-70-70</span>
-                </a>
-                <a href="mailto:mi.kak.vse.gomel@gmail.com" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors select-all">
-                  <Mail size={14} className="text-purple-500 shrink-0" />
-                  <span className="truncate">mi.kak.vse.gomel@gmail.com</span>
-                </a>
-                <a href="https://instagram.com/mi_kak_vse_gomel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
-                  <Instagram size={14} className="text-purple-500 shrink-0" />
-                  <span>@mi_kak_vse_gomel</span>
-                </a>
+              <div className="pt-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                  Наши контакты
+                </span>
+                <div className="space-y-2 font-bold text-xs pt-1">
+                  <a href="tel:+375447566605" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                    <Phone size={14} className="text-purple-500 shrink-0" />
+                    <span>+375 (44) 756-66-05 <span className="text-[10px] font-black text-purple-600 font-sans">А1</span></span>
+                  </a>
+                  <a href="mailto:mi.kak.vse.gomel@gmail.com" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors select-all">
+                    <Mail size={14} className="text-purple-500 shrink-0" />
+                    <span className="truncate">mi.kak.vse.gomel@gmail.com</span>
+                  </a>
+                  <a href="https://instagram.com/mi_kak_vse_gomel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                    <Instagram size={14} className="text-purple-500 shrink-0" />
+                    <span>@mi_kak_vse_gomel</span>
+                  </a>
+                </div>
               </div>
             </div>
 
