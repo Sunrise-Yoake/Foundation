@@ -878,74 +878,110 @@ export default function App() {
     <div className="min-h-screen overflow-x-hidden selection:bg-purple-100 selection:text-purple-900">
       {/* Header */}
       <header className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-20 h-auto py-2.5 md:h-20 md:py-0 flex justify-between items-center">
+          <div className="flex items-center gap-3 sm:gap-4 flex-1 mr-2">  
             <div 
-              className="w-16 h-16 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+              className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center cursor-pointer transition-transform active:scale-95 shrink-0"
               onClick={() => !isAdmin && setIsLoginOpen(true)}
             >
               <OrganizationLogo />
             </div>
-             <div className="flex items-center gap-3 sm:gap-4 md:gap-5">
-               <a
-                 href="tel:*222*75%23"
-                 onClick={() => {
-                   navigator.clipboard.writeText('*222*75#');
-                   setCopiedHeaderUssd(true);
-                   setTimeout(() => setCopiedHeaderUssd(false), 2000);
-                 }}
-                 className="bg-purple-600 hover:bg-purple-700 hover:scale-[1.03] active:scale-95 text-white px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full flex items-center justify-center font-black transition-all shadow-md shadow-purple-200 select-all"
-                 title="Наберите USSD-запрос или нажмите, чтобы скопировать"
-               >
-                 <span className={`text-sm sm:text-base md:text-lg font-headline font-black pr-[0.18em] transition-all ${copiedHeaderUssd ? 'tracking-normal text-emerald-300' : 'tracking-[0.18em]'}`}>
-                   {copiedHeaderUssd ? '✓ СКОПИРОВАНО' : '*222*75#'}
-                 </span>
-               </a>
- 
-               <a
-                 href="sms:2275"
-                 onClick={() => {
-                   navigator.clipboard.writeText('2275');
-                   setCopiedHeaderSms(true);
-                   setTimeout(() => setCopiedHeaderSms(false), 2000);
-                 }}
-                 className="bg-purple-50 hover:bg-purple-100/90 text-purple-700 hover:scale-[1.03] active:scale-95 px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full flex items-center justify-center font-black transition-all border border-purple-100/80 select-all"
-                 title="Отправьте SMS или нажмите, чтобы скопировать"
-               >
-                 <span className={`text-sm sm:text-base md:text-lg font-headline font-black pr-[0.18em] transition-all ${copiedHeaderSms ? 'tracking-normal text-emerald-600' : 'tracking-[0.18em]'}`}>
-                   {copiedHeaderSms ? '✓ ОТПРАВЛЕНО' : '2275'}
-                 </span>
-               </a>
-             </div>
-          </div>
-          
-          <nav className="hidden lg:flex items-center gap-8">
-            {[
-              { name: 'Наш фонд', id: 'home' },
-              { name: 'Проекты', id: 'projects' },
-              { name: 'Хочу помочь', id: 'help' },
-              { name: 'Получить помощь', id: 'get_help' }
-            ].map((item) => (
-              <button 
-                key={item.id} 
-                aria-current={activeMainSection === item.id ? 'page' : undefined}
-                aria-label={`Открыть раздел: ${item.name}`}
-                onClick={() => {
-                  setActiveMainSection(item.id);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`text-sm font-bold uppercase tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 rounded-lg px-2 py-1 ${activeMainSection === item.id ? 'text-purple-600' : 'text-slate-500 hover:text-slate-900'}`}
+            
+            {/* Главный контейнер */}
+            <div className="flex flex-col items-start min-[520px]:flex-row min-[520px]:items-center gap-1">
+
+              <div className="flex flex-row items-center gap-1">
+
+                {/* USSD Кнопка */}
+                <a
+                  href="tel:*222*75%23"
+                  onClick={() => {
+                    navigator.clipboard.writeText('*222*75#');
+                    setCopiedHeaderUssd(true);
+                    setTimeout(() => setCopiedHeaderUssd(false), 2000);
+                  }}
+                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center"
+                  title="Наберите USSD-запрос или нажмите, чтобы скопировать"
+                >
+                  <span
+                    className={`text-lg md:text-xl font-headline font-semibold transition-all ${
+                      copiedHeaderUssd
+                        ? 'text-emerald-600 font-bold'
+                        : 'tracking-widest'
+                    }`}
+                  >
+                    {copiedHeaderUssd ? 'Скопировано' : '*222*75#'}
+                  </span>
+                </a>
+
+                {/* SMS Кнопка */}
+                <a
+                  href="sms:2275"
+                  onClick={() => {
+                    navigator.clipboard.writeText('2275');
+                    setCopiedHeaderSms(true);
+                    setTimeout(() => setCopiedHeaderSms(false), 2000);
+                  }}
+                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center"
+                  title="Отправьте SMS или нажмите, чтобы скопировать"
+                >
+                  <span
+                    className={`text-lg md:text-xl font-headline font-semibold transition-all ${
+                      copiedHeaderSms
+                        ? 'text-emerald-600'
+                        : 'tracking-widest'
+                    }`}
+                  >
+                    {copiedHeaderSms ? 'Скопировано' : '2275'}
+                  </span>
+                </a>
+              </div>
+
+              {/* Кнопка "Поддержать фонд" */}
+              <a
+                href="https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#E67E22] hover:bg-[#D35400] text-white hover:scale-[1.01] active:scale-95 px-3 py-1.5 rounded-full flex items-center justify-center font-bold transition-all shadow-sm shadow-orange-100 shrink-0 cursor-pointer text-center"
+                title="Поддержать фонд через ЕРИП"
               >
-                {item.name}
-              </button>
-            ))}
-          </nav>
+                <span className="text-sm md:text-base font-headline font-bold uppercase tracking-wider">
+                  Поддержать фонд
+                </span>
+              </a>
+
+
+            </div>
+          </div>
+  
+            {/* Навигационные ссылки (скрыты на мобильных) */}
+            <nav className="hidden min-[1120px]:flex items-center gap-7">
+              {[
+                { name: 'Наш фонд', id: 'home' },
+                { name: 'Проекты', id: 'projects' },
+                { name: 'Хочу помочь', id: 'help' },
+                { name: 'Получить помощь', id: 'get_help' }
+              ].map((item) => (
+                <button 
+                  key={item.id} 
+                  aria-current={activeMainSection === item.id ? 'page' : undefined}
+                  aria-label={`Открыть раздел: ${item.name}`}
+                  onClick={() => {
+                    setActiveMainSection(item.id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`text-[15px] font-bold uppercase tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 rounded-lg px-2 py-1 ${activeMainSection === item.id ? 'text-purple-600' : 'text-slate-500 hover:text-slate-900'}`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </nav>
 
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
               aria-label="Открыть мобильное меню"
-              className="lg:hidden text-slate-900 p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl transition-colors"
+              className="min-[1120px]:hidden text-slate-900 p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl transition-colors"
             >
               <Menu size={24} />
             </button>
@@ -962,7 +998,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm min-[1120px]:flex"
             />
             <motion.div
               initial={{ y: '-100%' }}
@@ -972,7 +1008,7 @@ export default function App() {
               role="dialog"
               aria-modal="true"
               aria-label="Мобильное меню навигации"
-              className="fixed top-0 left-0 right-0 z-[130] bg-white shadow-2xl rounded-b-[2rem] border-b border-slate-100 lg:hidden p-6 pt-20"
+              className="fixed top-0 left-0 right-0 z-[130] bg-white shadow-2xl rounded-b-[2rem] border-b border-slate-100 min-[1120px]:flex p-6 pt-20"
             >
               <div className="absolute top-4 right-6 flex items-center justify-end">
                 <button 
@@ -1411,19 +1447,21 @@ export default function App() {
                               {activeTab.desc}
                             </p>
 
-                            <div className="pt-2">
-                              <a 
-                                href="#" 
-                                className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
-                                  activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
-                                  activeHelpTab === 'individuals' ? 'bg-purple-600 shadow-purple-100' :
-                                  'bg-emerald-600 shadow-emerald-100'
-                                }`}
-                              >
-                                {activeTab.cta}
-                                {activeTab.ctaIcon}
-                              </a>
-                            </div>
+                          <div className="pt-2">
+                            <a 
+                              href={activeHelpTab === 'individuals' ? "https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0" : "#"} 
+                              target={activeHelpTab === 'individuals' ? "_blank" : undefined}
+                              rel={activeHelpTab === 'individuals' ? "noopener noreferrer" : undefined}
+                              className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
+                                activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
+                                activeHelpTab === 'individuals' ? 'bg-purple-600 shadow-purple-100' :
+                                'bg-emerald-600 shadow-emerald-100'
+                              }`}
+                            >
+                              {activeTab.cta}
+                              {activeTab.ctaIcon}
+                            </a>
+                          </div>
                           </div>
 
                           <div className="hidden md:block relative w-32 h-32 opacity-20">
@@ -1632,7 +1670,6 @@ export default function App() {
                     <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Телефоны</p>
                       <p className="text-slate-900 font-bold text-sm leading-tight">+375 44 756-66-05 (A1)</p>
-                      <p className="text-slate-900 font-bold text-sm leading-tight">+375 29 865-70-70</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
@@ -1764,20 +1801,28 @@ export default function App() {
                 <h3 className="text-xl font-headline font-black mb-6 relative z-10 text-emerald-900">Документы</h3>
                 
                 <div className="space-y-3 relative z-10">
-                  <button className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group">
+                  <a 
+                    href="/docs/ustav.docx" 
+                    download="ustav.docx"
+                    className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <FileText size={20} className="text-emerald-600" />
                       <span className="text-sm font-extrabold text-emerald-900">Устав учреждения</span>
                     </div>
                     <Download size={16} className="text-emerald-600 opacity-60 group-hover:opacity-100 transition-all" />
-                  </button>
-                  <button className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group">
+                  </a>
+                  <a 
+                    href="/docs/certificate.jpg" 
+                    download="certificate.jpg"
+                    className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <FileText size={20} className="text-emerald-600" />
                       <span className="text-sm font-extrabold text-emerald-900">Свидетельство</span>
                     </div>
                     <Download size={16} className="text-emerald-600 opacity-60 group-hover:opacity-100 transition-all" />
-                  </button>
+                  </a>
                 </div>
               </div>
             </motion.div>
