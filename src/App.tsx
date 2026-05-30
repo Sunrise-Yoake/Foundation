@@ -450,6 +450,223 @@ function HelpRequestForm() {
   );
 }
 
+function VolunteerForm({ onClose }: { onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    address: '',
+    age: '',
+    hasDisabledChildCard: false,
+    phone: '',
+    email: '',
+    consent: false,
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+    if (!formData.fullName.trim()) newErrors.fullName = 'Пожалуйста, введите ваше ФИО';
+    if (!formData.address.trim()) newErrors.address = 'Пожалуйста, введите место жительства (населенный пункт)';
+    if (!formData.age.trim()) newErrors.age = 'Пожалуйста, укажите ваш возраст';
+    if (!formData.phone.trim()) newErrors.phone = 'Пожалуйста, введите номер телефона';
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Пожалуйста, введите корректный E-mail';
+      }
+    }
+    if (!formData.consent) newErrors.consent = 'Необходимо согласие на обработку персональных данных';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/volunteer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setSubmitError(errData.error || 'Произошла ошибка при отправке анкеты. Пожалуйста, попробуйте еще раз.');
+      }
+    } catch (error) {
+      console.error('Volunteer form submission error:', error);
+      setSubmitError('Сетевая ошибка. Пожалуйста, проверьте интернет-соединение.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-8 flex flex-col items-center justify-center h-full"
+      >
+        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-6 shadow-xl shadow-emerald-100">
+          <Check size={40} strokeWidth={3} className="animate-bounce" />
+        </div>
+        <h3 className="text-2xl font-headline font-black text-emerald-950 mb-4">Спасибо! Анкета принята</h3>
+        <p className="text-emerald-800/80 text-base max-w-sm mx-auto leading-relaxed mb-6 font-medium">
+          Мы получили ваши ответы и очень ценим ваше желание помочь! Мы свяжемся с вами в ближайшее время.
+        </p>
+        <button 
+          onClick={onClose}
+          type="button"
+          className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition-all text-sm shadow-md hover:scale-105"
+        >
+          Закрыть
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 text-left">
+      {submitError && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold leading-relaxed w-full">
+          {submitError}
+        </div>
+      )}
+
+      <div>
+        <label htmlFor="vol-fullName" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">ФИО *</label>
+        <input 
+          type="text"
+          id="vol-fullName"
+          required
+          value={formData.fullName}
+          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+          placeholder="Иванов Иван Иванович"
+          className={`w-full px-4 py-2.5 bg-white border ${errors.fullName ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
+        />
+        {errors.fullName && <span className="text-xs text-red-500 mt-1 block">{errors.fullName}</span>}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="vol-address" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Место жительства *</label>
+          <input 
+            type="text"
+            id="vol-address"
+            required
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            placeholder="г. Минск, пр. Независимости"
+            className={`w-full px-4 py-2.5 bg-white border ${errors.address ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
+          />
+          {errors.address && <span className="text-xs text-red-500 mt-1 block">{errors.address}</span>}
+        </div>
+
+        <div>
+          <label htmlFor="vol-age" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Возраст *</label>
+          <input 
+            type="text"
+            id="vol-age"
+            required
+            value={formData.age}
+            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+            placeholder="Например, 25"
+            className={`w-full px-4 py-2.5 bg-white border ${errors.age ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
+          />
+          {errors.age && <span className="text-xs text-red-500 mt-1 block">{errors.age}</span>}
+        </div>
+      </div>
+
+      <div className="bg-emerald-50/50 border border-emerald-100 p-3.5 rounded-xl flex items-center justify-between gap-3">
+        <label htmlFor="vol-hasDisabledChildCard" className="text-xs font-bold text-emerald-900 select-none cursor-pointer leading-tight">
+          Имеете ли удостоверение ребенка-инвалида?
+        </label>
+        <input 
+          type="checkbox"
+          id="vol-hasDisabledChildCard"
+          checked={formData.hasDisabledChildCard}
+          onChange={(e) => setFormData({ ...formData, hasDisabledChildCard: e.target.checked })}
+          className="h-5 w-5 bg-white border border-emerald-300 rounded text-emerald-600 focus:ring-emerald-500 focus-visible:ring-emerald-500/40 cursor-pointer"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="vol-phone" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Номер телефона *</label>
+          <IMaskInput
+            mask="+375 (00) 000-00-00"
+            id="vol-phone"
+            value={formData.phone}
+            required
+            onAccept={(value: string) => setFormData(prev => ({ ...prev, phone: value }))}
+            className={`w-full px-4 py-2.5 bg-white border ${errors.phone ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
+            placeholder="+375 (__) ___-__-__"
+            type="tel"
+          />
+          {errors.phone && <span className="text-xs text-red-500 mt-1 block">{errors.phone}</span>}
+        </div>
+
+        <div>
+          <label htmlFor="vol-email" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">E-mail</label>
+          <input 
+            type="email"
+            id="vol-email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="example@gmail.com"
+            className={`w-full px-4 py-2.5 bg-white border ${errors.email ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
+          />
+          {errors.email && <span className="text-xs text-red-500 mt-1 block">{errors.email}</span>}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="vol-consent" className="flex items-start gap-3 cursor-pointer select-none">
+          <input 
+            type="checkbox"
+            id="vol-consent"
+            required
+            checked={formData.consent}
+            onChange={(e) => setFormData({ ...formData, consent: e.target.checked })}
+            className="mt-1 h-4 w-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300 focus-visible:ring-emerald-500/40 cursor-pointer animate-none"
+          />
+          <span className="text-[11px] text-emerald-800 leading-snug">
+            Я даю согласие на обработку моих персональных данных и подтверждаю достоверность предоставленных сведений. *
+          </span>
+        </label>
+        {errors.consent && <span className="text-xs text-red-500 block mt-1">{errors.consent}</span>}
+      </div>
+
+      <div className="pt-2 flex gap-3">
+        <button 
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl font-black transition-all text-sm cursor-pointer"
+        >
+          Отмена
+        </button>
+        <button 
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black shadow-lg shadow-emerald-100/50 hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-55 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {isSubmitting ? 'Отправка...' : 'Отправить'} <ArrowRight size={16} />
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function App() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [dbError, setDbError] = useState(false);
@@ -460,6 +677,7 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isVolunteerModalOpen, setIsVolunteerModalOpen] = useState(false);
   
   // Editing state
   const [editingProjectId, setEditingProjectId] = useState<string | number | null>(null);
@@ -2588,6 +2806,46 @@ export default function App() {
                   {isAuthLoading ? 'Загрузка...' : 'Войти'}
                 </button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Volunteer Registration Modal */}
+      <AnimatePresence>
+        {isVolunteerModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-emerald-50 border border-emerald-200 p-6 sm:p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100 rounded-full blur-3xl -mr-16 -mt-16" />
+              
+              <button 
+                onClick={() => setIsVolunteerModalOpen(false)}
+                className="absolute top-6 right-6 text-emerald-800/60 hover:text-emerald-900 transition-colors cursor-pointer z-10"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="mb-6 relative text-left">
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <Heart size={28} className="text-emerald-600 animate-pulse fill-emerald-600 shrink-0" />
+                  <h2 className="text-2xl sm:text-3xl font-headline font-black text-emerald-950">Анкета волонтёра</h2>
+                </div>
+                <p className="text-emerald-800/80 text-xs sm:text-sm font-bold pl-[38px]">Станьте частью нашей дружной команды</p>
+              </div>
+
+              <div className="relative max-h-[75vh] overflow-y-auto pr-1">
+                <VolunteerForm onClose={() => setIsVolunteerModalOpen(false)} />
+              </div>
             </motion.div>
           </motion.div>
         )}
