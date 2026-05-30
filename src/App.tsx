@@ -566,7 +566,7 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
             required
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder="г. Минск, пр. Независимости"
+            placeholder="г. Гомель, ул. Совецкая"
             className={`w-full px-4 py-2.5 bg-white border ${errors.address ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
           />
           {errors.address && <span className="text-xs text-red-500 mt-1 block">{errors.address}</span>}
@@ -576,10 +576,17 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
           <label htmlFor="vol-age" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Возраст *</label>
           <input 
             type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             id="vol-age"
             required
             value={formData.age}
-            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+            onChange={(e) => {
+              const cleanVal = e.target.value.replace(/\D/g, '');
+              if (cleanVal.length <= 3) {
+                setFormData({ ...formData, age: cleanVal });
+              }
+            }}
             placeholder="Например, 25"
             className={`w-full px-4 py-2.5 bg-white border ${errors.age ? 'border-red-400' : 'border-emerald-250 hover:border-emerald-350 focus:border-emerald-500'} rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold`}
           />
@@ -1666,19 +1673,28 @@ export default function App() {
                             </p>
 
                           <div className="pt-2">
-                            <a 
-                              href={activeHelpTab === 'individuals' ? "https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0" : "#"} 
-                              target={activeHelpTab === 'individuals' ? "_blank" : undefined}
-                              rel={activeHelpTab === 'individuals' ? "noopener noreferrer" : undefined}
-                              className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
-                                activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
-                                activeHelpTab === 'individuals' ? 'bg-purple-600 shadow-purple-100' :
-                                'bg-emerald-600 shadow-emerald-100'
-                              }`}
-                            >
-                              {activeTab.cta}
-                              {activeTab.ctaIcon}
-                            </a>
+                            {activeHelpTab === 'volunteers' ? (
+                              <button 
+                                onClick={() => setIsVolunteerModalOpen(true)}
+                                className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 bg-emerald-600 shadow-emerald-100 cursor-pointer"
+                              >
+                                {activeTab.cta}
+                                {activeTab.ctaIcon}
+                              </button>
+                            ) : (
+                              <a 
+                                href={activeHelpTab === 'individuals' ? "https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0" : "#"} 
+                                target={activeHelpTab === 'individuals' ? "_blank" : undefined}
+                                rel={activeHelpTab === 'individuals' ? "noopener noreferrer" : undefined}
+                                className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
+                                  activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
+                                  'bg-purple-600 shadow-purple-100'
+                                }`}
+                              >
+                                {activeTab.cta}
+                                {activeTab.ctaIcon}
+                              </a>
+                            )}
                           </div>
                           </div>
 

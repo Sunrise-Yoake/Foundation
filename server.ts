@@ -72,6 +72,36 @@ async function startServer() {
     }
   });
 
+  // API Route for volunteer requests
+  app.post("/api/volunteer", async (req, res) => {
+    const { fullName, address, age, hasDisabledChildCard, phone, email } = req.body;
+
+    if (!process.env.RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not set.");
+      return res.status(500).json({ error: "Сервис отправки писем не настроен (отсутствует API-ключ RESEND_API_KEY)." });
+    }
+
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { data, error } = await resend.emails.send({
+        from: 'Fond <onboarding@resend.dev>',
+        to: ['ksenyu.karaxanovoj@gmail.com'],
+        subject: 'Новая анкета ВОЛОНТЕРА - "Мы как все"',
+        text: `ФИО: ${fullName}\nМесто жительства: ${address}\nВозраст: ${age}\nИмеет удостоверение ребенка-инвалида: ${hasDisabledChildCard ? "Да" : "Нет"}\nТелефон: ${phone}\nE-mail: ${email || 'Не указан'}`,
+      });
+
+      if (error) {
+        console.error("Resend Error:", error);
+        return res.status(400).json(error);
+      }
+
+      res.status(200).json({ success: true, data });
+    } catch (err) {
+      console.error("Internal Server Error:", err);
+      res.status(500).json({ error: "Failed to send email" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -86,10 +116,6 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
 }
 
 startServer();
