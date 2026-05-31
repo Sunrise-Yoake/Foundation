@@ -1,8 +1,8 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { Resend } from 'resend';
-import dotenv from 'dotenv';
+import { Resend } from "resend";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -17,17 +17,21 @@ async function startServer() {
     const { name, phone, email } = req.body;
 
     if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not set.");
-      return res.status(500).json({ error: "Email service not configured" });
+      return res.status(500).json({
+        error: "Email service not configured",
+      });
     }
 
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
+
       const { data, error } = await resend.emails.send({
-        from: 'Fond <onboarding@resend.dev>', // Resend default for unverified domains
-        to: ['ksenyu.karaxanovoj@gmail.com'],
+        from: "Fond <onboarding@resend.dev>",
+        to: ["ksenyu.karaxanovoj@gmail.com"],
         subject: 'Новая заявка с сайта "Мы как все"',
-        text: `имя: ${name}\nконтактные данные\nпочта: ${email}\nтелефон: ${phone}`,
+        text: `Имя: ${name}
+Телефон: ${phone}
+E-mail: ${email}`,
       });
 
       if (error) {
@@ -38,7 +42,9 @@ async function startServer() {
       res.status(200).json({ success: true, data });
     } catch (err) {
       console.error("Internal Server Error:", err);
-      res.status(500).json({ error: "Failed to send email" });
+      res.status(500).json({
+        error: "Failed to send email",
+      });
     }
   });
 
@@ -47,17 +53,25 @@ async function startServer() {
     const { parentName, phone, email, childNameAge, description } = req.body;
 
     if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not set.");
-      return res.status(500).json({ error: "Email service not configured" });
+      return res.status(500).json({
+        error: "Email service not configured",
+      });
     }
 
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
+
       const { data, error } = await resend.emails.send({
-        from: 'Fond <onboarding@resend.dev>', // Resend default for unverified domains
-        to: ['ksenyu.karaxanovoj@gmail.com'],
+        from: "Fond <onboarding@resend.dev>",
+        to: ["ksenyu.karaxanovoj@gmail.com"],
         subject: 'Новая заявка на ПОЛУЧЕНИЕ ПОМОЩИ - "Мы как все"',
-        text: `ФИО родителя/опекуна: ${parentName}\nТелефон: ${phone}\nE-mail: ${email}\nРебенок (имя и возраст): ${childNameAge}\n\nОписание ситуации и нужной помощи:\n${description}`,
+        text: `ФИО родителя/опекуна: ${parentName}
+Телефон: ${phone}
+E-mail: ${email}
+Ребёнок (имя и возраст): ${childNameAge}
+
+Описание ситуации:
+${description}`,
       });
 
       if (error) {
@@ -68,26 +82,45 @@ async function startServer() {
       res.status(200).json({ success: true, data });
     } catch (err) {
       console.error("Internal Server Error:", err);
-      res.status(500).json({ error: "Failed to send email" });
+      res.status(500).json({
+        error: "Failed to send email",
+      });
     }
   });
 
   // API Route for volunteer requests
   app.post("/api/volunteer", async (req, res) => {
-    const { fullName, address, age, hasDisabledChildCard, phone, email } = req.body;
+    const {
+      fullName,
+      address,
+      age,
+      hasDisabledChildCard,
+      phone,
+      email,
+    } = req.body;
 
     if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not set.");
-      return res.status(500).json({ error: "Сервис отправки писем не настроен (отсутствует API-ключ RESEND_API_KEY)." });
+      return res.status(500).json({
+        error:
+          "Сервис отправки писем не настроен (отсутствует API-ключ RESEND_API_KEY).",
+      });
     }
 
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
+
       const { data, error } = await resend.emails.send({
-        from: 'Fond <onboarding@resend.dev>',
-        to: ['ksenyu.karaxanovoj@gmail.com'],
+        from: "Fond <onboarding@resend.dev>",
+        to: ["ksenyu.karaxanovoj@gmail.com"],
         subject: 'Новая анкета ВОЛОНТЕРА - "Мы как все"',
-        text: `ФИО: ${fullName}\nМесто жительства: ${address}\nВозраст: ${age}\nИмеет удостоверение ребенка-инвалида: ${hasDisabledChildCard ? "Да" : "Нет"}\nТелефон: ${phone}\nE-mail: ${email || 'Не указан'}`,
+        text: `ФИО: ${fullName}
+Место жительства: ${address}
+Возраст: ${age}
+Имеет удостоверение ребёнка-инвалида: ${
+          hasDisabledChildCard ? "Да" : "Нет"
+        }
+Телефон: ${phone}
+E-mail: ${email || "Не указан"}`,
       });
 
       if (error) {
@@ -98,24 +131,37 @@ async function startServer() {
       res.status(200).json({ success: true, data });
     } catch (err) {
       console.error("Internal Server Error:", err);
-      res.status(500).json({ error: "Failed to send email" });
+      res.status(500).json({
+        error: "Failed to send email",
+      });
     }
   });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+      },
       appType: "spa",
     });
+
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(process.cwd(), "dist");
+
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 }
 
-startServer();
+startServer().catch((error) => {
+  console.error("Failed to start server:", error);
+});

@@ -1063,9 +1063,9 @@ export default function App() {
       border: 'border-amber-100',
       text: 'text-amber-700',
       iconColor: 'text-amber-600',
-      desc: 'Корпоративное партнерство и системная поддержка программ фонда.',
-      cta: 'Подробнее',
-      ctaIcon: <ChevronRight size={16} />
+      desc: 'Вы можете поддержать наш проект как компания или частное лицо, став официальным партнёром фонда. Помогите проекту финансово, передайте необходимые товары (технику, мебель, развивающие материалы, средства гигиены) или окажите профессиональные услуги — медицинские, юридические, психологические или консультационные.',
+      cta: 'Скачать договор безвозмездной помощи и приложения',
+      ctaIcon: <Download size={16} />
     },
     {
       id: 'individuals',
@@ -1543,7 +1543,11 @@ export default function App() {
                       {/* Card 1 */}
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
-                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center"
+                        onClick={() => {
+                          setActiveMainSection('projects');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center cursor-pointer"
                       >
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
@@ -1554,30 +1558,38 @@ export default function App() {
                             <ArrowUpRight size={24} className="text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0" />
                           </h3>
                         </div>
-                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Адресная помощь на лечение и реабилитацию детей с ОВЗ.</p>
+                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Помогаем семьям оплачивать лечение, реабилитацию и важные потребности ребёнка.</p>
                       </motion.div>
 
                       {/* Card 2 */}
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
-                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center"
+                        onClick={() => {
+                          setActiveMainSection('projects');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative h-[160px] flex flex-col justify-center cursor-pointer"
                       >
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                             <CreditCard size={20} />
                           </div>
                           <h3 className="text-lg font-headline font-bold text-slate-900 leading-tight flex items-center justify-between flex-1">
-                            Выплаты и пособия
+                            Поддержка мам
                             <ArrowUpRight size={24} className="text-slate-300 group-hover:text-blue-500 transition-colors shrink-0" />
                           </h3>
                         </div>
-                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Юридическая консультация по получению государственных льгот.</p>
+                        <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Забота о мамах, воспитывающих детей с ОВЗ: оздоровительные программы, занятия спортом и помощь в восстановлении ресурсов.</p>
                       </motion.div>
 
                       {/* Card 3 */}
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
-                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative flex flex-col justify-center h-[160px]"
+                        onClick={() => {
+                          setActiveMainSection('projects');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative flex flex-col justify-center h-[160px] cursor-pointer"
                       >
                         <div className="relative z-10">
                           <div className="flex items-center gap-3 mb-2">
@@ -1586,21 +1598,21 @@ export default function App() {
                             </div>
                             <h3 className="text-lg font-headline font-bold text-slate-900 leading-tight">Другая помощь</h3>
                           </div>
-                          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Психологические группы и досуговые мероприятия для всей семьи.</p>
+                          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">Всё, что помогает сделать жизнь семьи легче и комфортнее.</p>
                         </div>
 
                         {/* Stickers clustered at the bottom with overlap and overflow */}
-                        <div className="absolute -top-5 left-1 md:-left-12 z-40 rotate-[-15deg] scale-90 sm:scale-100">
+                        <div className="absolute -top-5 left-1 md:-left-12 z-40 rotate-[-15deg] scale-90 sm:scale-100 pointer-events-none">
                           <span className="px-5 py-2 bg-purple-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-purple-600 block whitespace-nowrap">Услуги</span>
                         </div>
                         
-                        <div className="absolute -bottom-4 left-1 md:-left-6 z-20 rotate-[-10deg] scale-90 sm:scale-100">
+                        <div className="absolute -bottom-4 left-1 md:-left-6 z-20 rotate-[-10deg] scale-90 sm:scale-100 pointer-events-none">
                           <span className="px-5 py-2 bg-emerald-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-emerald-600 block whitespace-nowrap">Продукты</span>
                         </div>
-                        <div className="absolute -bottom-9 left-[22%] md:left-1/4 z-30 rotate-[6deg] scale-90 sm:scale-100">
+                        <div className="absolute -bottom-9 left-[22%] md:left-1/4 z-30 rotate-[6deg] scale-90 sm:scale-100 pointer-events-none">
                           <span className="px-5 py-2 bg-pink-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-pink-600 block whitespace-nowrap">Одежда</span>
                         </div>
-                        <div className="absolute -bottom-4 right-1 left-auto md:left-[55%] md:right-auto z-20 rotate-[-5deg] scale-90 sm:scale-100">
+                        <div className="absolute -bottom-4 right-1 left-auto md:left-[55%] md:right-auto z-20 rotate-[-5deg] scale-90 sm:scale-100 pointer-events-none">
                           <span className="px-5 py-2 bg-blue-500 text-white text-[11px] font-black uppercase tracking-tighter shadow-xl border-b-4 border-blue-600 block whitespace-nowrap">Игрушки</span>
                         </div>
                       </motion.div>
@@ -1619,14 +1631,14 @@ export default function App() {
                     <div className="text-right relative z-30 w-full">
                       <h2 className="text-3xl sm:text-4xl md:text-6xl lg:-translate-y-[6px] font-headline font-extrabold text-slate-900 leading-[1.1] tracking-tighter">
                         <span className="block whitespace-nowrap">Как можно</span>
-                        <span className="block whitespace-nowrap">получить помощь?</span>
+                        <span className="block whitespace-nowrap">поддержать фонд?</span>
                       </h2>
                     </div>
                   </div>
 
-                  <div className="max-w-4xl mx-auto">
+                  <div className="max-w-4xl mx-auto w-full px-0">
                     {/* Documentation Style Tabs - Aligned Right, dynamic width on mobile */}
-                    <div role="tablist" aria-label="Категории помощи" className="flex w-full items-end justify-between sm:justify-end -mb-px relative z-40 mt-2 sm:mt-4 lg:mt-10 gap-1 sm:gap-0">
+                    <div role="tablist" aria-label="Категории помощи" className="flex w-full items-end justify-between sm:justify-end -mb-px relative z-40 mt-2 sm:mt-4 lg:mt-10 gap-0.5 sm:gap-1.5 overflow-x-hidden">
                       {helpTabs.map((tab) => (
                         <button
                           key={tab.id}
@@ -1635,15 +1647,15 @@ export default function App() {
                           aria-selected={activeHelpTab === tab.id}
                           aria-controls={`help-tabpanel-${tab.id}`}
                           onClick={() => setActiveHelpTab(tab.id)}
-                          className={`flex-1 sm:flex-initial px-1 xs:px-2 py-3 sm:px-8 sm:py-4 font-headline font-black text-[10px] xs:text-xs min-[390px]:text-[13px] sm:text-lg transition-all duration-300 border-t border-x rounded-t-2xl sm:rounded-t-xl text-center flex justify-center items-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 ${
+                          className={`flex-1 sm:flex-initial px-0.5 xs:px-1.5 min-[360px]:px-2.5 sm:px-8 py-2.5 sm:py-4 font-headline font-black text-[9px] min-[350px]:text-[10px] min-[380px]:text-[11px] min-[410px]:text-xs sm:text-base md:text-lg transition-all duration-300 border-t border-x rounded-t-[10px] min-[360px]:rounded-t-xl sm:rounded-t-2xl text-center flex justify-center items-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 cursor-pointer ${
                             activeHelpTab === tab.id 
                               ? `${tab.bg} ${tab.text} ${tab.border} border-b-transparent z-30 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]` 
                               : 'bg-slate-100/50 text-slate-400 border-transparent hover:bg-slate-100 z-10'
                           }`}
                         >
-                          <div className="flex items-center gap-1 sm:gap-3 justify-center">
-                            {React.cloneElement(tab.icon as React.ReactElement, { size: 16, className: `hidden min-[370px]:block shrink-0 ${activeHelpTab === tab.id ? '' : 'opacity-30'}` } as any)}
-                            <span className="whitespace-nowrap">{tab.title}</span>
+                          <div className="flex items-center gap-1 sm:gap-2.5 justify-center w-full">
+                            {React.cloneElement(tab.icon as React.ReactElement, { size: 16, className: `hidden sm:block shrink-0 ${activeHelpTab === tab.id ? '' : 'opacity-30'}` } as any)}
+                            <span className="whitespace-nowrap tracking-tight select-none">{tab.title}</span>
                           </div>
                         </button>
                       ))}
@@ -1668,12 +1680,38 @@ export default function App() {
                               {activeTab.fullTitle}
                             </h3>
                             
-                            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-xl">
+                            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-none md:max-w-4xl whitespace-pre-line">
                               {activeTab.desc}
                             </p>
 
                           <div className="pt-2">
-                            {activeHelpTab === 'volunteers' ? (
+                            {/* Кнопка только для Спонсоров */}
+                            {activeHelpTab === 'sponsors' && (
+                              <a 
+                                href="/dogovor_bezvozmezdnoj_pomoshchi.docx" 
+                                download="dogovor_bezvozmezdnoj_pomoshchi.docx"
+                                className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 text-center bg-amber-600 shadow-amber-100"
+                              >
+                                {activeTab.cta}
+                                {activeTab.ctaIcon}
+                              </a>
+                            )}
+
+                            {/* Кнопка только для Частных лиц */}
+                            {activeHelpTab === 'individuals' && (
+                              <a 
+                                href="https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0" 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 text-center bg-purple-600 shadow-purple-100"
+                              >
+                                {activeTab.cta}
+                                {activeTab.ctaIcon}
+                              </a>
+                            )}
+
+                            {/* Кнопка только для Волонтеров */}
+                            {activeHelpTab === 'volunteers' && (
                               <button 
                                 onClick={() => setIsVolunteerModalOpen(true)}
                                 className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 bg-emerald-600 shadow-emerald-100 cursor-pointer"
@@ -1681,19 +1719,6 @@ export default function App() {
                                 {activeTab.cta}
                                 {activeTab.ctaIcon}
                               </button>
-                            ) : (
-                              <a 
-                                href={activeHelpTab === 'individuals' ? "https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0" : "#"} 
-                                target={activeHelpTab === 'individuals' ? "_blank" : undefined}
-                                rel={activeHelpTab === 'individuals' ? "noopener noreferrer" : undefined}
-                                className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ${
-                                  activeHelpTab === 'sponsors' ? 'bg-amber-600 shadow-amber-100' :
-                                  'bg-purple-600 shadow-purple-100'
-                                }`}
-                              >
-                                {activeTab.cta}
-                                {activeTab.ctaIcon}
-                              </a>
                             )}
                           </div>
                           </div>
@@ -1789,7 +1814,7 @@ export default function App() {
                 Хочу помочь
               </h1>
               <p className="text-base sm:text-lg text-slate-500 leading-relaxed max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto md:mx-0">
-                Ваша поддержка помогает нам продолжать проект «Мы как все» и менять жизни детей к лучшему.
+                Ваша поддержка помогает нам продолжать проект «Мы как все» и менять жизни детей и их родителей к лучшему.
               </p>
             </div>
 
