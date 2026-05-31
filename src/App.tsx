@@ -162,7 +162,7 @@ const OrganizationLogo = ({ className = "w-full h-full" }: { className?: string 
   );
 };
 
-const MotherChildIcon = ({ className = "relative w-12 h-12 flex items-center justify-center shrink-0", imgClassName = "w-full h-full object-contain opacity-75 hover:opacity-100 transition-all" }: { className?: string; imgClassName?: string }) => {
+const MotherChildIcon = ({ className = "relative w-8 h-8 flex items-center justify-center shrink-0", imgClassName = "w-full h-full object-contain opacity-75 hover:opacity-100 transition-all" }: { className?: string; imgClassName?: string }) => {
   const [hasError, setHasError] = useState(false);
 
   return (
@@ -181,27 +181,79 @@ const MotherChildIcon = ({ className = "relative w-12 h-12 flex items-center jus
           className={imgClassName}
         />
       ) : (
-        <div className="w-full h-full border border-dashed border-purple-200 rounded-xl bg-purple-50/50 flex flex-col items-center justify-center p-0.5 text-center text-[8px] leading-tight font-black text-purple-600 select-none">
+        <div className="w-full h-full border border-dashed border-purple-200 rounded-xl bg-purple-50/50 flex flex-col items-center justify-center p-0.5 text-center text-[8px] leading-tight font-black text-purple-500 select-none">
           <span>МАМА</span>
-          <span>И ДИТЯ</span>
         </div>
       )}
     </div>
   );
 };
-// Количество партнеров. При добавлении новых участников достаточно изменить это число.
-const PARTNERS_COUNT = 8;
-const partnersList = Array.from({ length: PARTNERS_COUNT }, (_, i) => i + 1);
+// Динамическое определение доступных партнеров без ручного изменения кода.
+const useDynamicPartners = () => {
+  const [activePartners, setActivePartners] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8]);
+
+  useEffect(() => {
+    const detectPartners = async () => {
+      const valid: number[] = [];
+      let consecutiveFailures = 0;
+      let currentId = 1;
+const checkImageExists = (num: number): Promise<boolean> => {
+        return new Promise((resolve) => {
+          const img = new window.Image();
+          img.src = `/partners/partner-${num}.png`;
+          img.onload = () => resolve(true);
+          img.onerror = () => {
+            const svgImg = new window.Image();
+            svgImg.src = `/partners/partner-${num}.svg`;
+            svgImg.onload = () => resolve(true);
+            svgImg.onerror = () => resolve(false);
+          };
+        });
+      };
+            // Проверяем до 100 возможных партнеров. Если видим 5 неудач подряд — прекращаем поиск.
+      while (consecutiveFailures < 5 && currentId <=50){
+        const exist = await checkImageExists(currentId);
+        if (exist) {
+          valid.push(currentId);
+          consecutiveFailures = 0;
+        } else {
+          consecutiveFailures++;
+        }
+        currentId++;
+      }
+
+      if (valid.length > 0) {
+        setActivePartners(valid);
+      }
+    };
+
+    detectPartners();
+  }, []);
+    return activePartners;
+};
+
+const getMarqueeItems = (list: number[]) => {
+  if (list.length === 0) return [];
+  // Дублируем список, чтобы в ряду строки было не менее 18 элементов для плавности анимации.
+  const minItems = 18;
+  const repeats = Math.max(3, Math.ceil(minItems / list.length));
+  const result: number[] = [];
+  for (let i = 0; i < repeats; i++) {
+    result.push(...list);
+  }
+  return result;
+};
 
 const PartnerSlot = ({ num }: { num: number }) => {
   const [hasError, setHasError] = useState(false);
 
+  if (hasError) return null;
+
   return (
-    <div className="w-full max-w-[170px] h-18 flex items-center justify-center relative">
-      {!hasError ? (
-        <img 
-          src={`/partners/partner-${num}.png`} 
-          alt={`Логотип партнера ${num}`}
+    <div className="w-40 flex-shrink-0 h-20 flex items-center justify-center relative select-none">
+      <img 
+        src={`/partners/partner-${num}.png`} 
+        alt={`Логотип партнера ${num}`}
           onError={(e) => {
             if (e.currentTarget.src.endsWith('.png')) {
               e.currentTarget.src = `/partners/partner-${num}.svg`;
@@ -209,13 +261,8 @@ const PartnerSlot = ({ num }: { num: number }) => {
               setHasError(true);
             }
           }}
-          className="max-h-[52px] max-w-full object-contain pointer-events-none"
+          className="h-15 sm:h-16 w-auto max-w-full object-contain pointer-events-none"
         />
-      ) : (
-        <span className="text-xs font-black uppercase tracking-wider text-slate-400 select-none text-center">
-          ПАРТНЁР {num}
-        </span>
-      )}
     </div>
   );
 };
@@ -248,6 +295,102 @@ const GalleryImage = ({ src, alt }: { src: string; alt: string }) => {
           <span className="text-[9px] text-slate-300 mt-1 font-mono">{src}</span>
         </div>
       )}
+    </div>
+  );
+};
+
+// Dynamic floating decorative petals/particles drifting from the emblem towards the text
+const HeroFlowerParticles = () => {
+  const particles = React.useMemo(() => {
+    return Array.from({ length: 24 }).map((_, i) => {
+      const type = i % 4;
+      const size = 8 + (i % 3) * 6; // размеры лепестков от 8px до 20px
+      const colors = [
+        'text-pink-400/60',
+        'text-purple-400/65',
+        'text-fuchsia-400/60',
+        'text-violet-400/50',
+        'text-rose-300/75',
+        'text-rose-400/55'
+      ];
+      const color = colors[i % colors.length];
+      
+      // Направление полета: справа налево (с 65%-95% до 5%-45% ширины экрана)
+      const startX = 65 + (i * 7) % 30;
+      const startY = 10 + (i * 13) % 80;
+      
+      const endX = 5 + (i * 9) % 40;
+      const endY = startY - 20 + (i * 11) % 40; // легкий дрейф по высоте вверх/вниз
+      
+      const duration = 14 + (i * 3) % 18; // плавный органический полет длительностью от 14 до 32 секунд
+      const delay = (i * 1.2) % 15;
+      
+      return {
+        id: i,
+        type,
+        size,
+        color,
+        startX: `${startX}%`,
+        startY: `${startY}%`,
+        endX: `${endX}%`,
+        endY: `${endY}%`,
+        duration,
+        delay,
+        rotate: (i * 45) % 360,
+        endRotate: ((i * 45) % 360) + (i % 2 === 0 ? 360 : -360) * (2 + (i % 3)),
+      };
+    });
+  }, []);
+
+  return (
+    <div className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-hidden select-none">
+      {particles.map((p) => {
+        let svgPath = "";
+        if (p.type === 0) {
+          // Изящный одиночный лепесток
+          svgPath = "M12 21.5c-3.5 0-6.5-3-6.5-6.5c0-4.5 5.5-12 6.5-13.2c1 1.2 6.5 8.7 6.5 13.2c0 3.5-3 6.5-6.5 6.5z";
+        } else if (p.type === 1) {
+          // Маленький цветок с пятью лепестками
+          svgPath = "M12 9.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5s.67 1.5 1.5 1.5zm0 8c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5s.67 1.5 1.5 1.5zm6-4c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5s.67 1.5 1.5 1.5zm-12 0C6.83 13.5 7.5 12.83 7.5 12S6.83 10.5 6 10.5S4.5 11.17 4.5 12S5.17 13.5 6 13.5z";
+        } else if (p.type === 2) {
+          // Изогнутый двойной лепесток крыла бабочки
+          svgPath = "M12 10c1-2 4-2 3.5 1.5c-.3.8-.5 1.7-1 2.3c-.6.7-1.3.8-1.5.9c-.2-.1-.9-.2-1.5-.9c-.5-.6-.7-1.5-1-2.3C10 8 13 8 12 10z";
+        } else {
+          // Нежная звездочка-цветок
+          svgPath = "M12 2a1.5 1.5 0 0 1 1.5 1.5v3.4c2.5-.2 4.1 1.8 4.1 1.8s-2.1 1-3.6.4v3.4a1.5 1.5 0 0 1-3 0V9.1c-1.5.6-3.6-.4-3.6-.4s1.6-2 4.1-1.8V3.5A1.5 1.5 0 0 1 12 2z";
+        }
+
+        return (
+          <motion.div
+            key={p.id}
+            className={`absolute ${p.color} pointer-events-none select-none`}
+            style={{
+              width: p.size,
+              height: p.size,
+              left: p.startX,
+              top: p.startY,
+              transform: `rotate(${p.rotate}deg)`,
+            }}
+            animate={{
+              left: [p.startX, p.endX],
+              top: [p.startY, p.endY],
+              rotate: [p.rotate, p.endRotate],
+              opacity: [0, 0.3, 0.85, 0.85, 0.3, 0],
+              scale: [0.5, 1.1, 1.1, 0.9, 0.7, 0.4],
+            }}
+            transition={{
+              duration: p.duration,
+              delay: p.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="w-full h-full fill-current" xmlns="http://www.w3.org/2000/svg">
+              <path d={svgPath} />
+            </svg>
+          </motion.div>
+        );
+      })}
     </div>
   );
 };
@@ -678,6 +821,7 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function App() {
+  const activePartners = useDynamicPartners();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [dbError, setDbError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1284,7 +1428,20 @@ export default function App() {
               <div className="blob w-40 h-40 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-yellow-400 bottom-0 right-0 opacity-40" />
               <div className="blob w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-pink-400 top-1/2 -right-10 opacity-30" />
               
-              <div className="max-w-7xl mx-auto px-6">
+              {/* Иллюстрация "Мама и дитя" в роли фонового/сопроводительного элемента */}
+              <div className="absolute right-0 -translate-y-1/2 top-[180px] xs:top-[195px] sm:top-[230px] md:top-[260px] lg:top-[53%] lg:bottom-auto w-[180px] xs:w-[220px] sm:w-[290px] md:w-[370px] lg:w-[580px] xl:w-[680px] h-[240px] xs:h-[300px] sm:h-[400px] md:h-[500px] lg:h-[82%] xl:h-[88%] pointer-events-none z-0 opacity-[0.14] sm:opacity-20 md:opacity-[0.24] lg:opacity-85 select-none overflow-visible">
+                <img 
+                  src="/header.png" 
+                  alt="Мы как все иллюстрация" 
+                  className="w-full h-full object-contain object-bottom lg:object-right transition-all duration-300"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+
+              {/* Летающие лепестки и частицы, связывающие иллюстрацию с текстом */}
+              <HeroFlowerParticles />
+
+              <div className="max-w-7xl mx-auto px-6 relative z-10">
                 {/* Centered Badge */}
                 <div className="flex justify-center mb-12">
                   <motion.div 
@@ -1297,7 +1454,8 @@ export default function App() {
                 </div>
 
                 <div className="grid lg:grid-cols-12 gap-16 items-center">
-                  <div className="lg:col-span-9 relative z-10 flex flex-col items-start text-left">
+                  {/* Текстовый блок занимает сбалансированные 8 колонок для создания свободного пространства справа */}
+                  <div className="lg:col-span-8 relative z-10 flex flex-col items-start text-left">
                     <motion.h1 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 0.99, y: 0 }}
@@ -1339,44 +1497,41 @@ export default function App() {
                     </div>
                   </div>
                   
-                  {/* Optional: Add an illustration or image here if needed in the future to fill the right column */}
-                  <div className="lg:col-span-3 hidden lg:block" />
+                  {/* Пустая правая колонка сетки, в которой позиционируется графика */}
+                  <div className="lg:col-span-4 hidden lg:block" />
                 </div>
               </div>
             </section>
 
            {/* Sponsors */}
-            <section className="pt-10 pb-8 border-y border-slate-100 bg-white relative overflow-visible">
+           {(() => {
+            const marqueeItems = getMarqueeItems(activePartners);
+            return (
+              <section className="pt-7 pb-6 border-y border-slate-100 bg-white relative overflow-visible">
               {/* Радиальный белый градиент за кроликом */}
               <div className="absolute top-0 left-0 w-48 sm:w-64 h-24 bg-[radial-gradient(circle_at_top_left,_white_60%,_transparent_100%)] z-10 pointer-events-none" />
 
-              <Hare className="absolute -top-14 left-4 sm:left-12 w-24 sm:w-28 md:w-32 z-20 -rotate-6 pointer-events-none" />
-              
-              {/* Карусель приподнята на "-mt-4" для перекрытия с кроликом и градиентом */}
-              <div className="w-full relative overflow-hidden -mt-4">
-                {/* Левая маска угасания расширена (w-1/4 sm:w-1/3), чтобы логотипы гармонично растворялись под кроликом */}
-                <div className="absolute left-0 top-0 bottom-0 w-1/4 sm:w-1/3 bg-gradient-to-r from-white via-white/90 to-transparent z-10 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                <Hare className="absolute -top-14 left-4 sm:left-12 w-24 sm:w-28 md:w-32 z-20 -rotate-6 pointer-events-none" />
                 
-                {/* Бегущая строка */}
-                <div className="flex w-full overflow-hidden">
-                  <div className="flex gap-8 py-2 animate-marquee whitespace-nowrap shrink-0">
-                    {/* Первая копия (теперь здесь 6 партнеров: от 1 до 6) */}
-                    {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((num, idx) => (
-                      <div key={`partner-a-${idx}`} className="w-40 flex-shrink-0 flex items-center justify-center">
-                        <PartnerSlot num={num} />
+                {/* Карусель приподнята на "-mt-4" для перекрытия с кроликом и градиентом */}
+                <div className="w-full relative overflow-hidden -mt-4">
+                  {/* Левая маска угасания расширена (w-1/4 sm:w-1/3), чтобы логотипы гармонично растворялись под кроликом */}
+                      <div className="flex w-full overflow-hidden">
+                      <div className="flex gap-8 py-2 animate-marquee whitespace-nowrap shrink-0">
+                        {/* Первая копия */}
+                        {marqueeItems.map((num, idx) => (
+                          <PartnerSlot key={`partner-a-${num}-${idx}`} num={num} />
+                        ))}
+                        {/* Вторая копия */}
+                        {marqueeItems.map((num, idx) => (
+                          <PartnerSlot key={`partner-b-${num}-${idx}`} num={num} />
+                        ))}
                       </div>
-                    ))}
-                    {/* Вторая копия */}
-                    {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((num, idx) => (
-                      <div key={`partner-b-${idx}`} className="w-40 flex-shrink-0 flex items-center justify-center">
-                        <PartnerSlot num={num} />
-                      </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </section>
+                </section>
+              );
+            })()}
 
             {/* Community Events - Bento Grid with Central Title */}
             <section className="py-0 relative overflow-hidden bg-slate-50/50">
@@ -2307,10 +2462,18 @@ export default function App() {
                   ))}
               </div>
 
-              {news.filter(item => 
-                (activeCategory === 'Все' || item.category === activeCategory) &&
-                (item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
-              ).length === 0 && (
+              {news.filter(item => {
+                const matchesCategory = activeCategory === 'Все' || item.category === activeCategory;
+                const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                      item.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+                
+                const itemDate = new Date(item.date).getTime();
+                const start = startDate ? new Date(startDate).getTime() : -Infinity;
+                const end = endDate ? new Date(endDate).getTime() : Infinity;
+                const matchesDate = itemDate >= start && itemDate <= end;
+
+                return matchesCategory && matchesSearch && matchesDate;
+              }).length === 0 && (
                 <div className="text-center py-20">
                   <div className="text-slate-300 mb-4 flex justify-center">
                     <Search size={64} strokeWidth={1} />
@@ -2373,14 +2536,14 @@ export default function App() {
         <div className="absolute bottom-0 left-10 w-64 h-64 bg-amber-100/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Large background Mother and Child logo serving as an elegant watermark background */}
-        <div className="absolute right-0 bottom-[75px] w-[180px] h-[180px] xs:w-[220px] xs:h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] text-purple-900 pointer-events-none z-0 translate-x-4 translate-y-4 select-none">
+        <div className="absolute right-0 bottom-0 w-[160px] h-[160px] xs:w-[195px] xs:h-[195px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] lg:w-[315px] lg:h-[315px] text-purple-900 pointer-events-none z-0 translate-x-4 -translate-y-[45px] xs:-translate-y-[55px] sm:-translate-y-[65px] md:-translate-y-[70px] lg:-translate-y-[15px] select-none overflow-visible">
           <MotherChildIcon className="w-full h-full flex items-center justify-center" imgClassName="w-full h-full object-contain" />
         </div>  
-        <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 pt-10 pb-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start text-sm">
             
-            {/* Column 1: Institution details */}
-            <div className="space-y-3">
+            {/* Column 1: Institution details & Contacts */}
+            <div className="space-y-4">
               <div className="space-y-1">
                 <h3 className="font-headline font-black text-slate-900 leading-tight">
                   ЧСБУ «Свободное пространство»
@@ -2406,9 +2569,30 @@ export default function App() {
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Column 2: Quick Help & Phones */}
+              {/* Contacts section moved directly under Address */}
+              <div className="pt-3 border-t border-slate-100/60 max-w-sm">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                  Наши контакты
+                </span>
+                <div className="space-y-2 font-bold text-xs">
+                  <a href="tel:+375447566605" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                    <Phone size={14} className="text-purple-500 shrink-0" />
+                    <span>+375 (44) 756-66-05 <span className="text-[10px] font-black text-purple-600 font-sans">А1</span></span>
+                  </a>
+                  <a href="mailto:mi.kak.vse.gomel@gmail.com" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors select-all">
+                    <Mail size={14} className="text-purple-500 shrink-0" />
+                    <span className="truncate">mi.kak.vse.gomel@gmail.com</span>
+                  </a>
+                  <a href="https://instagram.com/mi_kak_vse_gomel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
+                    <Instagram size={14} className="text-purple-500 shrink-0" />
+                    <span>@mi_kak_vse_gomel</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+ 
+            {/* Column 2: Quick Help */}
             <div className="space-y-3.5">
               <div>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
@@ -2463,32 +2647,12 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              <div className="pt-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
-                  Наши контакты
-                </span>
-                <div className="space-y-2 font-bold text-xs pt-1">
-                  <a href="tel:+375447566605" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
-                    <Phone size={14} className="text-purple-500 shrink-0" />
-                    <span>+375 (44) 756-66-05 <span className="text-[10px] font-black text-purple-600 font-sans">А1</span></span>
-                  </a>
-                  <a href="mailto:mi.kak.vse.gomel@gmail.com" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors select-all">
-                    <Mail size={14} className="text-purple-500 shrink-0" />
-                    <span className="truncate">mi.kak.vse.gomel@gmail.com</span>
-                  </a>
-                  <a href="https://instagram.com/mi_kak_vse_gomel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-700 hover:text-purple-600 transition-colors">
-                    <Instagram size={14} className="text-purple-500 shrink-0" />
-                    <span>@mi_kak_vse_gomel</span>
-                  </a>
-                </div>
-              </div>
             </div>
 
           </div>
 
           {/* Bottom Copyright and Logos row (NO TOP LINE DIVIDER) */}
-          <div className="mt-8 pt-4 flex flex-row items-center justify-between gap-2.5 sm:gap-5">
+          <div className="mt-6 pt-2 flex flex-row items-center justify-between gap-2.5 sm:gap-5">
             
             {/* Copyright block with Logo aligned to its left */}
             <div className="flex-1 flex items-center gap-2.5 sm:gap-3 text-slate-400 text-[8px] xs:text-[10px] sm:text-xs font-bold leading-tight">
