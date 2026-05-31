@@ -189,6 +189,9 @@ const MotherChildIcon = ({ className = "relative w-12 h-12 flex items-center jus
     </div>
   );
 };
+// Количество партнеров. При добавлении новых участников достаточно изменить это число.
+const PARTNERS_COUNT = 8;
+const partnersList = Array.from({ length: PARTNERS_COUNT }, (_, i) => i + 1);
 
 const PartnerSlot = ({ num }: { num: number }) => {
   const [hasError, setHasError] = useState(false);
@@ -1638,7 +1641,7 @@ export default function App() {
 
                   <div className="max-w-4xl mx-auto w-full px-0">
                     {/* Documentation Style Tabs - Aligned Right, dynamic width on mobile */}
-                    <div role="tablist" aria-label="Категории помощи" className="flex w-full items-end justify-between sm:justify-end -mb-px relative z-40 mt-2 sm:mt-4 lg:mt-10 gap-0.5 sm:gap-1.5 overflow-x-hidden">
+                    <div role="tablist" aria-label="Категории помощи" className="flex w-full items-end justify-between md:justify-end -mb-[2px] relative z-40 mt-2 sm:mt-4 lg:mt-10 gap-0 overflow-visible">
                       {helpTabs.map((tab) => (
                         <button
                           key={tab.id}
@@ -1647,7 +1650,7 @@ export default function App() {
                           aria-selected={activeHelpTab === tab.id}
                           aria-controls={`help-tabpanel-${tab.id}`}
                           onClick={() => setActiveHelpTab(tab.id)}
-                          className={`flex-1 sm:flex-initial px-0.5 xs:px-1.5 min-[360px]:px-2.5 sm:px-8 py-2.5 sm:py-4 font-headline font-black text-[9px] min-[350px]:text-[10px] min-[380px]:text-[11px] min-[410px]:text-xs sm:text-base md:text-lg transition-all duration-300 border-t border-x rounded-t-[10px] min-[360px]:rounded-t-xl sm:rounded-t-2xl text-center flex justify-center items-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 cursor-pointer ${
+                          className={`flex-1 md:flex-initial px-2 sm:px-6 md:px-8 py-2.5 sm:py-4 font-headline font-black text-[10px] min-[360px]:text-xs sm:text-base md:text-lg transition-all duration-300 border rounded-t-[10px] min-[360px]:rounded-t-xl sm:rounded-t-2xl text-center flex justify-center items-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50 cursor-pointer ${
                             activeHelpTab === tab.id 
                               ? `${tab.bg} ${tab.text} ${tab.border} border-b-transparent z-30 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]` 
                               : 'bg-slate-100/50 text-slate-400 border-transparent hover:bg-slate-100 z-10'
@@ -1655,14 +1658,14 @@ export default function App() {
                         >
                           <div className="flex items-center gap-1 sm:gap-2.5 justify-center w-full">
                             {React.cloneElement(tab.icon as React.ReactElement, { size: 16, className: `hidden sm:block shrink-0 ${activeHelpTab === tab.id ? '' : 'opacity-30'}` } as any)}
-                            <span className="whitespace-nowrap tracking-tight select-none">{tab.title}</span>
+                            <span className="whitespace-normal min-[360px]:whitespace-nowrap tracking-tight select-none">{tab.title}</span>
                           </div>
                         </button>
                       ))}
                     </div>
 
                     {/* Main Content Container with responsive paddings */}
-                    <div className={`relative rounded-b-[2rem] rounded-tr-none rounded-tl-none sm:rounded-tl-[2rem] border shadow-xl overflow-hidden transition-all duration-500 ${activeTab.bg} ${activeTab.border}`}>
+                    <div className={`relative rounded-b-[2rem] rounded-tr-none rounded-tl-none md:rounded-tl-[2rem] border shadow-xl overflow-hidden transition-all duration-500 ${activeTab.bg} ${activeTab.border}`}>
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={activeHelpTab}
