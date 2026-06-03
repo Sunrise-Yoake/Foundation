@@ -1423,13 +1423,8 @@ export default function App() {
           <>
             {/* Hero Section */}
             <section className="relative pt-8 pb-20 overflow-hidden">
-              {/* Blobs */}
-              <div className="blob w-48 h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500 top-0 -left-20 opacity-40" />
-              <div className="blob w-40 h-40 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-yellow-400 bottom-0 right-0 opacity-40" />
-              <div className="blob w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-pink-400 top-1/2 -right-10 opacity-30" />
-              
-              {/* Иллюстрация "Мама и дитя" в роли фонового/сопроводительного элемента */}
-              <div className="absolute right-0 -translate-y-1/2 top-[180px] xs:top-[195px] sm:top-[230px] md:top-[260px] lg:top-[53%] lg:bottom-auto w-[180px] xs:w-[220px] sm:w-[290px] md:w-[370px] lg:w-[580px] xl:w-[680px] h-[240px] xs:h-[300px] sm:h-[400px] md:h-[500px] lg:h-[82%] xl:h-[88%] pointer-events-none z-0 opacity-[0.14] sm:opacity-20 md:opacity-[0.24] lg:opacity-85 select-none overflow-visible">
+              {/* Иллюстрация "Мама" в роли фонового/сопроводительного элемента */}
+              <div className="absolute right-0 -translate-y-1/2 top-[90px] xs:top-[25px] sm:top-[70px] md:top-[80px] lg:top-[40%] lg:bottom-auto w-[180px] xs:w-[220px] sm:w-[290px] md:w-[370px] lg:w-[580px] xl:w-[680px] h-[240px] xs:h-[300px] sm:h-[400px] md:h-[500px] lg:h-[82%] xl:h-[88%] pointer-events-none z-0 select-none overflow-visible">
                 <img 
                   src="/header.png" 
                   alt="Мы как все иллюстрация" 
@@ -1437,6 +1432,11 @@ export default function App() {
                   referrerPolicy="no-referrer"
                 />
               </div>
+              {/* Blobs */}
+              <div className="blob w-48 h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 bg-purple-500 top-0 -left-20 opacity-40" />
+              <div className="blob w-40 h-40 sm:w-20 sm:h-20 md:w-80 md:h-80 bg-yellow-400 bottom-0 right-0 opacity-30" />
+              <div className="blob w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-pink-400 top-1/2 -right-10 opacity-20" />
+              
 
               {/* Летающие лепестки и частицы, связывающие иллюстрацию с текстом */}
               <HeroFlowerParticles />
@@ -1846,8 +1846,8 @@ export default function App() {
                             {/* Кнопка только для Спонсоров */}
                             {activeHelpTab === 'sponsors' && (
                               <a 
-                                href="/dogovor_bezvozmezdnoj_pomoshchi.docx" 
-                                download="dogovor_bezvozmezdnoj_pomoshchi.docx"
+                                href="/Договор_безвозд_помощи_и_приложение.pdf" 
+                                download="Договор_безвозд_помощи_и_приложение.pdf"
                                 className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 text-center bg-amber-600 shadow-amber-100"
                               >
                                 {activeTab.cta}
@@ -1937,9 +1937,9 @@ export default function App() {
 
                 <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-4 md:gap-6">
                   {[
-                    { val: '20+', label: 'Стольким семьям уже помогли' },
-                    { val: '9+', label: 'Проектов реализовано' },
-                    { val: '20+', label: 'Мероприятий проведено' }
+                    { val: '70+', label: 'Стольким семьям уже помогли' },
+                    { val: '20+', label: 'Проектов реализовано' },
+                    { val: '100+', label: 'Мероприятий проведено' }
                   ].map((stat, i) => (
                     <motion.div 
                       key={i} 
