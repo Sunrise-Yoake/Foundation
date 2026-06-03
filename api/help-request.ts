@@ -1,34 +1,115 @@
 import { Resend } from 'resend';
 
+const colorThemes = {
+  orange: {
+    primaryColor: '#d97706',
+    labelBgColor: '#fffbeb',
+    labelTextColor: '#b45309',
+    tableBorderColor: '#fde68a',
+  }
+};
+
+function generateEmailHTML({
+  title,
+  subtitle,
+  fields
+}: {
+  title: string;
+  subtitle: string;
+  fields: { label: string; value: string | undefined | null }[];
+}): string {
+  const theme = colorThemes.orange;
+
+  const tableRows = fields
+    .map(
+      (f) => `
+    <tr>
+      <td style="padding: 14px 16px; background-color: ${theme.labelBgColor}; border: 1px solid ${theme.tableBorderColor}; color: ${theme.labelTextColor}; font-weight: bold; font-size: 14px; width: 40%; vertical-align: top; font-family: inherit;">
+        ${f.label}:
+      </td>
+      <td style="padding: 14px 16px; background-color: #ffffff; border: 1px solid ${theme.tableBorderColor}; color: #334155; font-size: 14px; width: 60%; vertical-align: top; font-family: inherit;">
+        ${f.value ? f.value.replace(/\n/g, '<br/>') : '<span style="color: #94a3b8; font-style: italic;">Не указано</span>'}
+      </td>
+    </tr>
+  `
+    )
+    .join("");
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 650px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 32px 40px;">
+              <h1 style="margin: 0 0 12px 0; color: ${theme.primaryColor}; font-size: 24px; font-weight: 800;">
+                ${title}
+              </h1>
+              <div style="height: 2px; background-color: ${theme.primaryColor}; margin-bottom: 20px;"></div>
+              
+              <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                ${subtitle}
+              </p>
+              
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid ${theme.tableBorderColor}; border-radius: 8px; overflow: hidden;">
+                ${tableRows}
+              </table>
+              
+              <div style="margin-top: 36px; padding-top: 20px; text-align: center; font-size: 13px; color: #94a3b8;">
+                Мы как все · Благотворительный фонд
+              </div>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { parentName, phone, email, childNameAge, description } = req.body;
+  const { name, phone, email, topic } = req.body;
 
   if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not set.");
     return res.status(500).json({ error: "Email service not configured" });
   }
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const htmlContent = generateEmailHTML({
+      title: 'Новое обращение (Задать вопрос)',
+      subtitle: 'На вашем сайте "Мы как все" было заполнено новое обращение волонтёру.',
+      fields: [
+        { label: 'Имя', value: name },
+        { label: 'Телефон', value: phone },
+        { label: 'E-mail', value: email || 'Не указан' },
+        { label: 'Тема обращения', value: topic || 'Не указана' }
+      ]
+    });
+
     const { data, error } = await resend.emails.send({
-      from: 'Fond <onboarding@resend.dev>',
-      to: ['ksenyu.karaxanovoj@gmail.com'],
-      subject: 'Новая заявка на ПОЛУЧЕНИЕ ПОМОЩИ - "Мы как все"',
-      text: `ФИО родителя/опекуна: ${parentName}\nТелефон: ${phone}\nE-mail: ${email}\nРебенок (имя и возраст): ${childNameAge}\n\nОписание ситуации и нужной помощи:\n${description}`,
+      from: "Fond <onboarding@resend.dev>",
+      to: ["ksenyu.karaxanovoj@gmail.com"],
+      subject: `Вопрос с сайта "Мы как все" — ${name}`,
+      text: `Имя: ${name}\nТелефон: ${phone}\nE-mail: ${email || "Не указан"}\nТема обращения: ${topic || "Не указана"}`,
+      html: htmlContent,
     });
 
     if (error) {
-      console.error("Resend Error:", error);
       return res.status(400).json(error);
     }
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    console.error("Internal Server Error:", err);
     return res.status(500).json({ error: "Failed to send email" });
   }
 }

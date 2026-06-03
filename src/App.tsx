@@ -1116,7 +1116,7 @@ export default function App() {
   const [copiedHeaderUssd, setCopiedHeaderUssd] = useState(false);
   const [copiedHeaderSms, setCopiedHeaderSms] = useState(false);
 
-  const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', topic: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'validation_error'>('idle');
   const [validationError, setValidationError] = useState<string>('');
@@ -1173,7 +1173,7 @@ export default function App() {
 
       if (response.ok) {
         setSubmitStatus('success');
-        setFormData({ name: '', phone: '', email: '' });
+        setFormData({ name: '', phone: '', email: '', topic: '' });
         setTimeout(() => {
           setIsOwlOpen(false);
           setSubmitStatus('idle');
@@ -2220,7 +2220,7 @@ export default function App() {
                 <div className="space-y-3 relative z-10">
                   <a 
                     href="/docs/ustav.docx" 
-                    download="ustav.docx"
+                    download="Устав.docx"
                     className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
@@ -2231,7 +2231,7 @@ export default function App() {
                   </a>
                   <a 
                     href="/docs/certificate.jpg" 
-                    download="certificate.jpg"
+                    download="Сертификат.jpg"
                     className="w-full flex items-center justify-between p-4 bg-white hover:bg-emerald-100/50 text-emerald-950 rounded-2xl shadow-sm transition-all border border-emerald-100 group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
@@ -3336,19 +3336,26 @@ export default function App() {
               <div className="p-6 relative z-10">
                 <button 
                   onClick={() => setIsOwlOpen(false)}
-                  className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer z-20"
                 >
                   <X size={24} />
                 </button>
 
-                <div className="flex flex-col items-center text-center">
-                  <Owl className="w-16 h-16 mb-4 drop-shadow-xl" />
-                  <h2 className="text-xl font-headline font-black text-slate-900 mb-1 tracking-tighter leading-tight">
-                    Поможем решить вопросы
-                  </h2>
-                  <p className="text-slate-500 text-xs font-bold mb-6">
-                    Наши волонтёры свяжутся с вами в ближайшее время.
-                  </p>
+                <div className="flex flex-col">
+                  {/* Header: Owl on the left, Title and subtitle on the right */}
+                  <div className="flex items-center gap-3.5 mb-5 text-left pr-6">
+                    <div className="shrink-0">
+                      <Owl className="w-11 h-11 drop-shadow-md" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-headline font-black text-slate-900 leading-tight">
+                        Поможем решить вопросы
+                      </h2>
+                      <p className="text-slate-500 text-[11px] font-bold mt-0.5 leading-tight">
+                        Наши волонтёры свяжутся с вами в ближайшее время.
+                      </p>
+                    </div>
+                  </div>
 
                   <form noValidate onSubmit={handleSubmit} className="w-full space-y-3.5 text-left">
                     <input 
@@ -3372,8 +3379,16 @@ export default function App() {
                     <input 
                       type="email" 
                       name="email"
-                      placeholder="Email" 
+                      placeholder="Email (необязательно)" 
                       value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 transition-all outline-none"
+                    />
+                    <input 
+                      type="text" 
+                      name="topic"
+                      placeholder="Тема обращения (необязательно)" 
+                      value={formData.topic}
                       onChange={handleInputChange}
                       className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 transition-all outline-none"
                     />
@@ -3423,22 +3438,29 @@ export default function App() {
                 <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full aspect-square bg-[radial-gradient(circle_at_50%_100%,#ea580c_0%,#fb923c_40%,#ffedd5_80%,transparent_100%)] blur-[60px] opacity-20" />
               </div>
 
-              <div className="p-8 md:p-10 relative z-10">
+              <div className="p-6 md:p-8 relative z-10">
                 <button 
                   onClick={() => setIsOwlOpen(false)}
-                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors z-20"
                 >
                   <X size={24} />
                 </button>
 
-                <div className="flex flex-col items-center text-center">
-                  <Owl className="w-20 h-20 mb-6 drop-shadow-xl" />
-                  <h2 className="text-2xl md:text-3xl font-headline font-black text-slate-900 mb-2 tracking-tighter leading-tight">
-                    Поможем решить вопросы
-                  </h2>
-                  <p className="text-slate-500 text-sm md:text-base font-bold mb-8">
-                    Наши волонтёры свяжутся с вами в ближайшее время.
-                  </p>
+                <div className="flex flex-col">
+                  {/* Header: Owl on the left, Title and subtitle on the right */}
+                  <div className="flex items-center gap-4 mb-6 text-left pr-6">
+                    <div className="shrink-0">
+                      <Owl className="w-14 h-14 drop-shadow-md" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-headline font-black text-slate-900 leading-tight">
+                        Поможем решить вопросы
+                      </h2>
+                      <p className="text-slate-500 text-xs md:text-sm font-bold mt-1 leading-tight">
+                        Наши волонтёры свяжутся с вами в ближайшее время.
+                      </p>
+                    </div>
+                  </div>
 
                   <form noValidate onSubmit={handleSubmit} className="w-full space-y-4 text-left">
                     <input 
@@ -3464,9 +3486,18 @@ export default function App() {
                     <input 
                       type="email" 
                       name="email"
-                      placeholder="Email" 
+                      placeholder="Email (необязательно)" 
                       aria-label="Ваш электронный адрес"
                       value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 focus-visible:ring-amber-500/50 transition-all outline-none"
+                    />
+                    <input 
+                      type="text" 
+                      name="topic"
+                      placeholder="Тема обращения (необязательно)" 
+                      aria-label="Тема обращения"
+                      value={formData.topic}
                       onChange={handleInputChange}
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500/40 focus-visible:ring-amber-500/50 transition-all outline-none"
                     />
