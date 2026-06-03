@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Настройки тем оформления для писем (соответствуют дизайну карточек и таблиц на сайте)
+// Helper with themes matching the requested elegant card/table style
 interface ThemeColors {
   primaryColor: string;
   labelBgColor: string;
@@ -14,36 +14,41 @@ interface ThemeColors {
   tableBorderColor: string;
 }
 
-const colorThemes: Record<'orange' | 'green', ThemeColors> = {
+const colorThemes: Record<'orange' | 'green' | 'violet', ThemeColors> = {
   orange: {
-    primaryColor: '#d97706', // Оранжево-янтарный стиль
-    labelBgColor: '#fffbeb', // Светло-оранжевая подложка (amber-50)
-    labelTextColor: '#b45309', // Текст (amber-700)
-    tableBorderColor: '#fde68a', // Рамка (amber-200)
+    primaryColor: '#d97706', // Amber/orange theme
+    labelBgColor: '#fffbeb', // Light amber background (amber-50)
+    labelTextColor: '#b45309', // Amber-700 text
+    tableBorderColor: '#fde68a', // Amber-200 border
   },
   green: {
-    primaryColor: '#0f766e', // Бирюзово-зеленый стиль
-    labelBgColor: '#f0fdf4', // Светло-зеленая подложка (green-50)
-    labelTextColor: '#115e59', // Текст (teal-800)
-    tableBorderColor: '#bbf7d0', // Рамка (green-200)
+    primaryColor: '#0f766e', // Teal-700
+    labelBgColor: '#f0fdf4', // Green-50 background
+    labelTextColor: '#115e59', // Teal-800 text
+    tableBorderColor: '#bbf7d0', // Green-200 border
+  },
+  violet: {
+    primaryColor: '#7c3aed', // Violet-600 theme
+    labelBgColor: '#f5f3ff', // Light violet background (violet-50)
+    labelTextColor: '#6d28d9', // Violet-700 text
+    tableBorderColor: '#ddd6fe', // Violet-200 border
   }
 };
 
-// Функция генерации красивого HTML-письма
 function generateEmailHTML({
   title,
   subtitle,
   fields,
   detailsTitle,
   detailsContent,
-  theme = 'orange'
+  theme = 'violet'
 }: {
   title: string;
   subtitle: string;
   fields: { label: string; value: string | undefined | null }[];
   detailsTitle?: string;
   detailsContent?: string;
-  theme?: 'orange' | 'green';
+  theme?: 'orange' | 'green' | 'violet';
 }): string {
   const chosenTheme = colorThemes[theme];
 
@@ -87,27 +92,27 @@ function generateEmailHTML({
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 650px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02); border: 1px solid #e2e8f0; border-collapse: collapse;">
           <tr>
             <td style="padding: 32px 40px;">
-              <!-- Основной Заголовок -->
+              <!-- Main Title -->
               <h1 style="margin: 0 0 12px 0; color: ${chosenTheme.primaryColor}; font-size: 24px; font-weight: 800; tracking: -0.01em;">
                 ${title}
               </h1>
               
-              <!-- Разделительная полоска -->
+              <!-- Color Divider Line -->
               <div style="height: 2px; background-color: ${chosenTheme.primaryColor}; margin-bottom: 20px;"></div>
               
-              <!-- Подзаголовок -->
+              <!-- Subtitle Text -->
               <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px; line-height: 1.6;">
                 ${subtitle}
               </p>
               
-              <!-- Таблица с полями формы -->
+              <!-- Bordered Clean Table -->
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid ${chosenTheme.tableBorderColor}; border-radius: 8px; overflow: hidden;">
                 ${tableRows}
               </table>
               
               ${detailsSection}
               
-              <!-- Футер письма -->
+              <!-- Clean Minimalist Footer -->
               <div style="margin-top: 36px; padding-top: 20px; text-align: center; font-size: 13px; color: #94a3b8;">
                 Мы как все · Благотворительный фонд
               </div>
@@ -125,7 +130,7 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Маршрут: Задать вопрос (Оранжевая тема)
+  // API Route for contact form (Задать вопрос)
   app.post("/api/contact", async (req, res) => {
     const { name, phone, email, topic } = req.body;
 
@@ -147,7 +152,7 @@ async function startServer() {
           { label: 'E-mail', value: email || 'Не указан' },
           { label: 'Тема обращения', value: topic || 'Не указана' }
         ],
-        theme: 'orange'
+        theme: 'violet'
       });
 
       const { data, error } = await resend.emails.send({
@@ -172,7 +177,7 @@ async function startServer() {
     }
   });
 
-  // API Маршрут: Получить помощь (Оранжевая тема)
+  // API Route for help requests (Получить помощь)
   app.post("/api/help-request", async (req, res) => {
     const { parentName, phone, email, childNameAge, description } = req.body;
 
@@ -196,7 +201,7 @@ async function startServer() {
         ],
         detailsTitle: 'Описание ситуации',
         detailsContent: description,
-        theme: 'orange'
+        theme: 'violet'
       });
 
       const { data, error } = await resend.emails.send({
@@ -221,7 +226,7 @@ async function startServer() {
     }
   });
 
-  // API Маршрут: Стать волонтером (Зеленая тема)
+  // API Route for volunteer requests (Стать волонтером)
   app.post("/api/volunteer", async (req, res) => {
     const {
       fullName,
@@ -230,6 +235,7 @@ async function startServer() {
       hasDisabledChildCard,
       phone,
       email,
+      helpDetail,
     } = req.body;
 
     if (!process.env.RESEND_API_KEY) {
@@ -253,6 +259,8 @@ async function startServer() {
           { label: 'Телефон', value: phone },
           { label: 'E-mail', value: email || 'Не указан' }
         ],
+        detailsTitle: 'Чем я могу помочь проекту',
+        detailsContent: helpDetail || 'Не указано',
         theme: 'green'
       });
 
@@ -260,7 +268,7 @@ async function startServer() {
         from: "Fond <onboarding@resend.dev>",
         to: ["ksenyu.karaxanovoj@gmail.com"],
         subject: `Анкета волонтера: ${fullName} — "Мы как все"`,
-        text: `ФИО: ${fullName}\nМесто жительства: ${address}\nВозраст: ${age}\nИмеет удостоверение ребёнка-инвалида: ${hasDisabledChildCard ? "Да" : "Нет"}\nТелефон: ${phone}\nE-mail: ${email || "Не указан"}`,
+        text: `ФИО: ${fullName}\nМесто жительства: ${address}\nВозраст: ${age}\nИмеет удостоверение ребёнка-инвалида: ${hasDisabledChildCard ? "Да" : "Нет"}\nТелефон: ${phone}\nE-mail: ${email || "Не указан"}\n\nЧем я могу помочь проекту:\n${helpDetail || "Не указано"}`,
         html: htmlContent,
       });
 

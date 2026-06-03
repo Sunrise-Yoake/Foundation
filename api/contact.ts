@@ -10,16 +10,16 @@ interface ThemeColors {
 
 const colorThemes: Record<'orange' | 'green', ThemeColors> = {
   orange: {
-    primaryColor: '#d97706', // Оранжевый бренд-цвет
-    labelBgColor: '#fffbeb', // Очень светлый оранжевый фон (amber-50)
-    labelTextColor: '#b45309', // Тёмный оранжевый для текста ярлыков
-    tableBorderColor: '#fde68a', // Светлая рамочка таблицы
+    primaryColor: '#d97706', 
+    labelBgColor: '#fffbeb', 
+    labelTextColor: '#b45309', 
+    tableBorderColor: '#fde68a', 
   },
   green: {
-    primaryColor: '#0f766e', // Бирюзовый/зелёный бренд-цвет
-    labelBgColor: '#f0fdf4', // Светло-зеленый фон
-    labelTextColor: '#115e59', // Тёмно-зеленый для текста ярлыков
-    tableBorderColor: '#bbf7d0', // Светлая зелёная рамочка
+    primaryColor: '#0f766e', 
+    labelBgColor: '#f0fdf4', 
+    labelTextColor: '#115e59', 
+    tableBorderColor: '#bbf7d0', 
   }
 };
 

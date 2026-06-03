@@ -604,6 +604,7 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
     hasDisabledChildCard: false,
     phone: '',
     email: '',
+    helpDetail: '',
     consent: false,
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -781,6 +782,18 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
           />
           {errors.email && <span className="text-xs text-red-500 mt-1 block">{errors.email}</span>}
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="vol-helpDetail" className="block text-xs font-black text-emerald-800 uppercase tracking-wider mb-1.5">Чем вы можете помочь проекту?</label>
+        <textarea 
+          id="vol-helpDetail"
+          rows={3}
+          value={formData.helpDetail}
+          onChange={(e) => setFormData({ ...formData, helpDetail: e.target.value })}
+          placeholder="Навыки, направление, интересы, опыт волонтёрства и т.д."
+          className="w-full px-4 py-2.5 bg-white border border-emerald-250 hover:border-emerald-350 focus:border-emerald-500 rounded-xl outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all text-emerald-950 font-bold resize-none"
+        />
       </div>
 
       <div>
