@@ -2063,7 +2063,7 @@ export default function App() {
                             {/* Кнопка только для Спонсоров */}
                             {activeHelpTab === 'sponsors' && (
                               <a 
-                                href="/dogovor_bezvozd_pomoshi.pdf"
+                                href="/docs/Договор_безвозд_помощи_и_приложение.pdf"
                                 download="Договор_безвозмездной_помощи_и_приложение.pdf"
                                 className="inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-black text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 text-center bg-amber-600 shadow-amber-100"
                               >
