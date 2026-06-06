@@ -34,6 +34,12 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(projectId) && isValidProject(incoming());
       allow update: if isSignedIn() && isValidId(projectId) && isValidProject(incoming());
       allow delete: if isSignedIn();
+
+      // РАЗРЕШЕНИЕ ДЛЯ НОВОЙ ПОДКОЛЛЕКЦИИ ФОТОГРАФИЙ (Добавлено):
+      match /galleryPhotos/{photoId} {
+        allow read, get, list: if true;
+        allow write: if isSignedIn();
+      }
     }
   }
 }
