@@ -940,6 +940,58 @@ export default function App() {
     }
   };
 
+  const getYoutubeEmbedUrl = (url?: string): string => {
+    if (!url) return '';
+    let cleanUrl = url.trim();
+    if (!cleanUrl) return '';
+
+    // Если это просто готовый 11-значный ID видео
+    if (/^[a-zA-Z0-9_-]{11}$/.test(cleanUrl)) {
+      return `https://www.youtube.com/embed/${cleanUrl}`;
+    }
+
+    // Если ссылка уже является ссылкой для встраивания
+    if (cleanUrl.includes('youtube.com/embed/')) {
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://' + cleanUrl;
+      }
+      return cleanUrl;
+    }
+
+    try {
+      let videoId = '';
+      let isShorts = cleanUrl.includes('youtube.com/shorts/');
+
+      if (isShorts) {
+        const parts = cleanUrl.split('youtube.com/shorts/');
+        if (parts[1]) {
+          videoId = parts[1].split('?')[0].split('&')[0];
+        }
+      } else if (cleanUrl.includes('youtu.be/')) {
+        const parts = cleanUrl.split('youtu.be/');
+        if (parts[1]) {
+          videoId = parts[1].split('?')[0].split('&')[0];
+        }
+      } else if (cleanUrl.includes('youtube.com/watch')) {
+        const urlObj = new URL(cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl);
+        videoId = urlObj.searchParams.get('v') || '';
+      } else if (cleanUrl.includes('youtube.com/v/')) {
+        const parts = cleanUrl.split('youtube.com/v/');
+        if (parts[1]) {
+          videoId = parts[1].split('?')[0].split('&')[0];
+        }
+      }
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}${isShorts ? '?shorts=1' : ''}`;
+      }
+    } catch (e) {
+      console.error("Error parsing YouTube URL:", e);
+    }
+
+    return cleanUrl;
+  };
+
   const compressImage = (file: File, isGallery = false): Promise<string> => {
     return new Promise((resolve) => {
       const fileSizeKb = file.size / 1024;
@@ -1107,16 +1159,35 @@ export default function App() {
       excerpt: newProject.excerpt,
       content: newProject.content,
       image: newProject.image,
-      gallery: newProject.gallery,
-      videoUrl: newProject.videoUrl,
+      videoUrl: getYoutubeEmbedUrl(newProject.videoUrl),
       id: editingProjectId ? (Number(editingProjectId) || editingProjectId) : Number(targetId),
       date: existingDate,
-      displayDate: existingDisplayDate
+      displayDate: existingDisplayDate,
+      gallery: [] // Keep empty in main document to bypass the 1MB limit entirely
     };
 
     const projectsPath = 'projects';
     try {
+      // 1. Save main document
       await setDoc(doc(db, projectsPath, targetId), newItem);
+
+      // 2. Save each gallery photo in the subcollection "galleryPhotos"
+      const galleryColRef = collection(db, projectsPath, targetId, 'galleryPhotos');
+      const uploadPromises = newProject.gallery.map((base64, idx) => {
+        return setDoc(doc(galleryColRef, String(idx)), {
+          image: base64,
+          index: idx
+        });
+      });
+      
+      // Delete any higher index photos from previous edits if gallery size shrunk
+      const deletePromises = [];
+      for (let i = newProject.gallery.length; i < 20; i++) {
+        deletePromises.push(deleteDoc(doc(galleryColRef, String(i))));
+      }
+
+      await Promise.all([...uploadPromises, ...deletePromises]);
+
       setIsAddProjectOpen(false);
       setEditingProjectId(null);
       setNewProject({
@@ -1153,11 +1224,48 @@ export default function App() {
   const [endDate, setEndDate] = useState('');
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
+  const [currentGallery, setCurrentGallery] = useState<string[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+
+  useEffect(() => {
+    if (!selectedNews) {
+      setCurrentGallery([]);
+      return;
+    }
+
+    // Совместимость со старыми записями
+    if (selectedNews.gallery && selectedNews.gallery.length > 0) {
+      setCurrentGallery(selectedNews.gallery);
+    } else {
+      setCurrentGallery([]);
+    }
+
+    setLoadingGallery(true);
+    const projectsPath = 'projects';
+    const galleryColRef = collection(db, projectsPath, String(selectedNews.id), 'galleryPhotos');
+    
+    const unsubscribe = onSnapshot(galleryColRef, (snapshot) => {
+      if (!snapshot.empty) {
+        const photos = snapshot.docs
+          .map(doc => doc.data() as { image: string; index: number })
+          .sort((a, b) => a.index - b.index)
+          .map(data => data.image);
+        
+        setCurrentGallery(photos);
+      }
+      setLoadingGallery(false);
+    }, (error) => {
+      console.error("Error loading gallery subcollection:", error);
+      setLoadingGallery(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedNews]);
 
   useEffect(() => {
     if (!selectedNews) return;
     
-    const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+    const allImages = [selectedNews.image, ...currentGallery].filter((url): url is string => typeof url === 'string' && url !== '');
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -1177,7 +1285,8 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxImageIndex, selectedNews]);
+  }, [lightboxImageIndex, selectedNews, currentGallery]);
+
   const [isOwlOpen, setIsOwlOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [currentIcon, setCurrentIcon] = useState('owl');
@@ -2793,7 +2902,7 @@ export default function App() {
                   tabIndex={0}
                   aria-label="Просмотреть главное изображение во весь экран"
                   onClick={() => {
-                    const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                    const allImages = [selectedNews.image, ...currentGallery].filter((url): url is string => typeof url === 'string' && url !== '');
                     if (allImages.length > 0) {
                       setLightboxImageIndex(0);
                     }
@@ -2801,7 +2910,7 @@ export default function App() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                      const allImages = [selectedNews.image, ...currentGallery].filter((url): url is string => typeof url === 'string' && url !== '');
                       if (allImages.length > 0) {
                         setLightboxImageIndex(0);
                       }
@@ -2843,66 +2952,84 @@ export default function App() {
                     ))}
                   </div>
 
-                  {selectedNews.gallery && selectedNews.gallery.length > 0 && (
-                    <div className="mb-12">
-                      <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Фотогалерея</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {selectedNews.gallery.map((img, idx) => {
-                          const openGalleryImage = () => {
-                            const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
-                            const indexInAll = allImages.indexOf(img);
-                            if (indexInAll !== -1) {
-                              setLightboxImageIndex(indexInAll);
-                            } else {
-                              setLightboxImageIndex(idx + 1);
-                            }
-                          };
-                          return (
-                            <div 
-                              key={idx} 
-                              onClick={openGalleryImage}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  openGalleryImage();
-                                }
-                              }}
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`Просмотреть фотографию ${idx + 1}`}
-                              className="aspect-square rounded-3xl overflow-hidden shadow-sm cursor-pointer group/gal relative focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50"
-                            >
-                              <img src={img} alt={`Фото из галереи ${idx + 1}`} className="w-full h-full object-cover group-hover/gal:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
-                              <div className="absolute inset-0 bg-black/0 hover:bg-black/30 group-focus-visible/gal:bg-black/30 flex items-center justify-center transition-colors duration-300">
-                                <Maximize2 className="text-white opacity-0 group-hover/gal:opacity-100 group-focus-visible/gal:opacity-100 transition-opacity" size={20} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                  {/* Отображение асинхронно загруженной галереи */}
+                  {loadingGallery ? (
+                    <div className="mb-12 flex flex-col items-center justify-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3"></div>
+                      <span className="text-sm font-bold text-slate-400">Мгновенная загрузка галереи...</span>
                     </div>
+                  ) : (
+                    currentGallery.length > 0 && (
+                      <div className="mb-12">
+                        <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Фотогалерея</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {currentGallery.map((img, idx) => {
+                            const openGalleryImage = () => {
+                              const allImages = [selectedNews.image, ...currentGallery].filter((url): url is string => typeof url === 'string' && url !== '');
+                              const indexInAll = allImages.indexOf(img);
+                              if (indexInAll !== -1) {
+                                setLightboxImageIndex(indexInAll);
+                              } else {
+                                setLightboxImageIndex(idx + 1);
+                              }
+                            };
+                            return (
+                              <div 
+                                key={idx} 
+                                onClick={openGalleryImage}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    openGalleryImage();
+                                  }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Просмотреть фотографию ${idx + 1}`}
+                                className="aspect-square rounded-3xl overflow-hidden shadow-sm cursor-pointer group/gal relative focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-500/50"
+                              >
+                                <img src={img} alt={`Фото из галереи ${idx + 1}`} className="w-full h-full object-cover group-hover/gal:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 group-focus-visible/gal:bg-black/30 flex items-center justify-center transition-colors duration-300">
+                                  <Maximize2 className="text-white opacity-0 group-hover/gal:opacity-100 group-focus-visible/gal:opacity-100 transition-opacity" size={20} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
                   )}
 
-                  {selectedNews.videoUrl && (
-                    <div className="mb-8">
-                      <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">Видео</h4>
-                      <div className="aspect-video w-full rounded-[2.5rem] overflow-hidden shadow-xl bg-slate-900">
-                        <iframe 
-                          className="w-full h-full"
-                          src={selectedNews.videoUrl}
-                          title="YouTube video player"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        ></iframe>
+                  {selectedNews.videoUrl && (() => {
+                    const embedUrl = getYoutubeEmbedUrl(selectedNews.videoUrl);
+                    const isShort = embedUrl.includes('shorts=1') || selectedNews.videoUrl.includes('shorts/');
+                    return (
+                      <div className="mb-8">
+                        <h4 className="text-xl font-headline font-black text-slate-900 mb-6 underline decoration-purple-500 decoration-4 underline-offset-4">
+                          {isShort ? 'YouTube Shorts' : 'Видео'}
+                        </h4>
+                        <div className={`mx-auto rounded-[2.5rem] overflow-hidden shadow-xl bg-slate-900 ${
+                          isShort 
+                            ? 'aspect-[9/16] max-w-[340px] w-full' 
+                            : 'aspect-video w-full'
+                        }`}>
+                          <iframe 
+                            className="w-full h-full"
+                            src={embedUrl}
+                            title="YouTube video player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {isAdmin && (
                     <div className="mt-12 pt-8 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:max-w-xl sm:ml-auto">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setEditingProjectId(selectedNews.id);
                           setNewProject({
                             title: selectedNews.title || '',
@@ -2910,7 +3037,7 @@ export default function App() {
                             excerpt: selectedNews.excerpt || '',
                             content: selectedNews.content || '',
                             image: selectedNews.image || '',
-                            gallery: selectedNews.gallery || [],
+                            gallery: currentGallery, // Передаем подгруженную галерею для редактирования
                             videoUrl: selectedNews.videoUrl || ''
                           });
                           setSelectedNews(null);
@@ -2963,7 +3090,7 @@ export default function App() {
             {/* Main content container */}
             <div className="relative w-full max-w-5xl aspect-[3/2] flex items-center justify-center max-h-[75vh]" onClick={(e) => e.stopPropagation()}>
               {(() => {
-                const allImages = [selectedNews.image, ...(selectedNews.gallery || [])].filter((url): url is string => typeof url === 'string' && url !== '');
+                const allImages = [selectedNews.image, ...currentGallery].filter((url): url is string => typeof url === 'string' && url !== '');
                 const currentImg = allImages[lightboxImageIndex] || selectedNews.image;
 
                 const prevIndex = (lightboxImageIndex - 1 + allImages.length) % allImages.length;
@@ -3198,6 +3325,14 @@ export default function App() {
                     setDeleteError(null);
                     const projectsPath = 'projects';
                     try {
+                      // Очищаем подколлекцию галереи (удаляем все 20 индексов)
+                      const galleryColRef = collection(db, projectsPath, String(selectedNews.id), 'galleryPhotos');
+                      const deletePromises = [];
+                      for (let i = 0; i < 20; i++) {
+                        deletePromises.push(deleteDoc(doc(galleryColRef, String(i))));
+                      }
+                      await Promise.all(deletePromises);
+
                       await deleteDoc(doc(db, projectsPath, String(selectedNews.id)));
                       setIsDeleteConfirmOpen(false);
                       setSelectedNews(null);
@@ -3348,31 +3483,47 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2 ml-1">Фотогалерея</label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider">Фотогалерея</label>
+                        <span className="text-xs font-black text-purple-600">
+                          Загружено {newProject.gallery?.length || 0} из 20
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-2">
-                        {newProject.gallery.map((img, idx) => (
-                          <div key={idx} className="aspect-square rounded-xl overflow-hidden relative group">
-                            <img src={img} className="w-full h-full object-cover" />
-                            <button 
+                        {newProject.gallery?.map((img, idx) => (
+                          <div key={idx} className="aspect-square relative rounded-xl overflow-hidden group border border-slate-100 shadow-sm">
+                            <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <button
                               type="button"
-                              onClick={() => setNewProject(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== idx) }))}
-                              className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                setNewProject(prev => ({
+                                  ...prev,
+                                  gallery: prev.gallery.filter((_, i) => i !== idx)
+                                }));
+                              }}
+                              className="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-rose-600 shadow-md cursor-pointer"
                             >
                               <X size={14} />
                             </button>
                           </div>
                         ))}
-                        <div className="aspect-square rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 relative flex items-center justify-center hover:border-purple-400 transition-colors">
-                          <input 
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={handleGalleryChange}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                          <Plus className="text-slate-300" size={24} />
-                        </div>
+                        {(newProject.gallery?.length || 0) < 20 && (
+                          <div className="aspect-square rounded-xl border-2 border-dashed border-slate-200 hover:border-purple-600 transition-colors flex items-center justify-center relative cursor-pointer">
+                            <input 
+                              type="file" 
+                              multiple
+                              accept="image/*"
+                              onChange={handleGalleryChange}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                            <Plus className="text-slate-300 group-hover:text-purple-600 transition-colors" size={24} />
+                          </div>
+                        )}
                       </div>
+                      <p className="text-[11px] text-slate-400 font-bold leading-normal">
+                        Рекомендуется добавлять до 20 фотографий.
+                      </p>
                     </div>
 
                     <div>
