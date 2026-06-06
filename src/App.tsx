@@ -836,6 +836,7 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
 export default function App() {
   const activePartners = useDynamicPartners();
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [isNewsLoading, setIsNewsLoading] = useState(true);
   const [dbError, setDbError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -891,11 +892,13 @@ export default function App() {
             ...data,
             id: Number(doc.id) || doc.id
           };
-        }) as NewsItem[];
+                }) as NewsItem[];
         setNews(loadedProjects);
       }
+      setIsNewsLoading(false);
     }, (error) => {
       setDbError(true);
+      setIsNewsLoading(false);
       handleFirestoreError(error, OperationType.GET, projectsPath);
     });
 
@@ -1733,97 +1736,100 @@ export default function App() {
             })()}
 
             {/* Community Events - Bento Grid with Central Title */}
-            {(() => {
-              const fallbackBentoItems = [
-                { id: 'fallback', title: "Встреча недели", image: "/gallery/event-1.jpg" },
-                { id: 'fallback', title: "Мастер-класс по рисованию", image: "/gallery/event-2.jpg" },
-                { id: 'fallback', title: "Летний лагерь", image: "/gallery/event-3.jpg" },
-                { id: 'fallback', title: "Кинопоказ", image: "/gallery/event-4.jpg" },
-                { id: 'fallback', title: "Семейный пикник", image: "/gallery/event-5.jpg" }
-              ];
+              {isNewsLoading && (
+                <section className="py-6 relative overflow-hidden bg-slate-50/50">
+                  <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[180px] md:auto-rows-[220px]">
+                      <div className="md:col-span-4 rounded-3xl bg-slate-100 animate-pulse border border-slate-200/40" />
+                      <div className="md:col-span-8 rounded-3xl bg-slate-100 animate-pulse border border-slate-200/40" />
+                      <div className="md:col-span-4 md:row-span-2 rounded-3xl bg-slate-100 animate-pulse border border-slate-200/40" />
+                      <div className="md:col-span-4 md:row-span-1 bg-purple-100 rounded-3xl animate-pulse" />
+                      <div className="md:col-span-4 md:row-span-1 rounded-3xl bg-slate-100 animate-pulse border border-slate-200/40" />
+                      <div className="md:col-span-8 md:row-span-1 rounded-3xl bg-slate-100 animate-pulse border border-slate-200/40" />
+                    </div>
+                  </div>
+                </section>
+              )}
 
-              const getBentoItem = (index: number) => {
-                if (news && news.length > index) {
-                  return news[index];
-                }
-                return fallbackBentoItems[index];
-              };
+              {!isNewsLoading && news.length > 0 && (() => {
+                const item0 = news[0];
+                const item1 = news[1];
+                const item2 = news[2];
+                const item3 = news[3];
+                const item4 = news[4];
 
-              const handleBentoClick = (item: any) => {
-                if (item && item.id !== 'fallback') {
-                  setSelectedNews(item);
-                }
-                setActiveMainSection('projects');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              };
-
-              const item0 = getBentoItem(0);
-              const item1 = getBentoItem(1);
-              const item2 = getBentoItem(2);
-              const item3 = getBentoItem(3);
-              const item4 = getBentoItem(4);
+                const handleBentoClick = (item: any) => {
+                  if (item) {
+                    setSelectedNews(item);
+                  }
+                  setActiveMainSection('projects');
+                };
 
               return (
                 <section className="py-0 relative overflow-hidden bg-slate-50/50">
                   <div className="blob w-[600px] h-[600px] bg-purple-50/50 -top-48 -left-48 opacity-40" />
-                  <div className="blob w-[400px] h-[400px] bg-amber-100/40 -bottom-24 -right-24 opacity-50" />
-                  
+                  <div className="blob w-[500px] h-[500px] bg-orange-50/40 -bottom-36 -right-36 opacity-30" />
                   <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    {/* Asymmetrical Bento Grid based on scheme */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[180px] md:auto-rows-[220px]">
                       
                       {/* Row 1: Small + Wide */}
-                      <motion.div 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        onClick={() => handleBentoClick(item0)}
-                        className="md:col-span-4 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
-                      >
-                        <div className="h-full flex flex-col">
-                          <div className="h-[85%] overflow-hidden">
-                            <GalleryImage src={item0.image} alt={item0.title} />
+                      {item0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() => handleBentoClick(item0)}
+                          className="md:col-span-4 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                        >
+                          <div className="h-full flex flex-col">
+                            <div className="h-[85%] overflow-hidden">
+                              <GalleryImage src={item0.image} alt={item0.title} />
+                            </div>
+                            <div className="h-[15%] flex items-center px-4 bg-white">
+                              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item0.title}</h3>
+                            </div>
                           </div>
-                          <div className="h-[15%] flex items-center px-4 bg-white">
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item0.title}</h3>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      )}
 
-                      <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        onClick={() => handleBentoClick(item1)}
-                        className="md:col-span-8 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
-                      >
-                        <div className="h-full flex flex-col">
-                          <div className="h-[85%] overflow-hidden">
-                            <GalleryImage src={item1.image} alt={item1.title} />
+                      {item1 && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() => handleBentoClick(item1)}
+                          className="md:col-span-8 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                        >
+                          <div className="h-full flex flex-col">
+                            <div className="h-[85%] overflow-hidden">
+                              <GalleryImage src={item1.image} alt={item1.title} />
+                            </div>
+                            <div className="h-[15%] flex items-center px-4 bg-white">
+                              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item1.title}</h3>
+                            </div>
                           </div>
-                          <div className="h-[15%] flex items-center px-4 bg-white">
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item1.title}</h3>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      )}
 
                       {/* Row 2: Tall + Title (Center) + Square */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        onClick={() => handleBentoClick(item2)}
-                        className="md:col-span-4 md:row-span-2 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
-                      >
-                        <div className="h-full flex flex-col">
-                          <div className="h-[90%] overflow-hidden">
-                            <GalleryImage src={item2.image} alt={item2.title} />
+                      {item2 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() => handleBentoClick(item2)}
+                          className="md:col-span-4 md:row-span-2 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                        >
+                          <div className="h-full flex flex-col">
+                            <div className="h-[90%] overflow-hidden">
+                              <GalleryImage src={item2.image} alt={item2.title} />
+                            </div>
+                            <div className="h-[10%] flex items-center px-4 bg-white">
+                              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item2.title}</h3>
+                            </div>
                           </div>
-                          <div className="h-[10%] flex items-center px-4 bg-white">
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item2.title}</h3>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      )}
 
                       {/* CENTRAL PURPLE BLOCK - Title Block (Centered) */}
                       <motion.div 
@@ -1836,49 +1842,53 @@ export default function App() {
                         }}
                         className="md:col-span-4 md:row-span-1 bg-purple-600 rounded-3xl flex flex-col items-center justify-center p-6 text-center shadow-xl z-20 relative overflow-hidden cursor-pointer order-first md:order-none"
                       >
-                        <div className="relative z-10">
-                          <h2 className="text-3xl md:text-4xl font-headline font-extrabold text-white mb-4 tracking-tighter leading-tight">События фонда</h2>
+                        <div className="relative z-10 font-headline">
+                          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tighter leading-tight">События фонда</h2>
                           <div className="flex items-center justify-center gap-3">
                             <div className="h-px w-8 bg-white/30" />
-                            <Heart size={16} className="text-white fill-current" />
+                            <Heart size={16} className="text-white fill-current animate-pulse" />
                             <div className="h-px w-8 bg-white/30" />
                           </div>
                         </div>
                       </motion.div>
 
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        onClick={() => handleBentoClick(item3)}
-                        className="md:col-span-4 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
-                      >
-                        <div className="h-full flex flex-col">
-                          <div className="h-[85%] overflow-hidden">
-                            <GalleryImage src={item3.image} alt={item3.title} />
+                      {item3 && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          onClick={() => handleBentoClick(item3)}
+                          className="md:col-span-4 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                        >
+                          <div className="h-full flex flex-col">
+                            <div className="h-[85%] overflow-hidden">
+                              <GalleryImage src={item3.image} alt={item3.title} />
+                            </div>
+                            <div className="h-[15%] flex items-center px-4 bg-white">
+                              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item3.title}</h3>
+                            </div>
                           </div>
-                          <div className="h-[15%] flex items-center px-4 bg-white">
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item3.title}</h3>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      )}
 
-                      <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        onClick={() => handleBentoClick(item4)}
-                        className="md:col-span-8 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
-                      >
-                        <div className="h-full flex flex-col">
-                          <div className="h-[85%] overflow-hidden">
-                            <GalleryImage src={item4.image} alt={item4.title} />
+                      {item4 && (
+                        <motion.div 
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() => handleBentoClick(item4)}
+                          className="md:col-span-8 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-500 cursor-pointer"
+                        >
+                          <div className="h-full flex flex-col">
+                            <div className="h-[85%] overflow-hidden">
+                              <GalleryImage src={item4.image} alt={item4.title} />
+                            </div>
+                            <div className="h-[15%] flex items-center px-4 bg-white">
+                              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item4.title}</h3>
+                            </div>
                           </div>
-                          <div className="h-[15%] flex items-center px-4 bg-white">
-                            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-wider line-clamp-1">{item4.title}</h3>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      )}
                     </div>
                   </div>
                 </section>
