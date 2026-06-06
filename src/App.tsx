@@ -146,7 +146,7 @@ const OrganizationLogo = ({ className = "w-full h-full" }: { className?: string 
           alt="Логотип фонда «Мы как все»"
           onError={(e) => {
             if (e.currentTarget.src.endsWith('/logo.svg')) {
-              e.currentTarget.src = '/logo.png';
+              e.currentTarget.src = '/logo.webp';
             } else {
               setHasError(true);
             }
@@ -173,7 +173,7 @@ const MotherChildIcon = ({ className = "relative w-8 h-8 flex items-center justi
           alt="Логотип «мама и дитя» проекта Мы как все"
           onError={(e) => {
             if (e.currentTarget.src.endsWith('/mother-child.svg')) {
-              e.currentTarget.src = '/mother-child.png';
+              e.currentTarget.src = '/mother-child.webp';
             } else {
               setHasError(true);
             }
@@ -200,11 +200,11 @@ const useDynamicPartners = () => {
 const checkImageExists = (num: number): Promise<boolean> => {
         return new Promise((resolve) => {
           const img = new window.Image();
-          img.src = `/partners/partner-${num}.png`;
+          img.src = `/partners/partner-${num}.webp`;
           img.onload = () => resolve(true);
           img.onerror = () => {
             const svgImg = new window.Image();
-            svgImg.src = `/partners/partner-${num}.svg`;
+            svgImg.src = `/partners/partner-${num}.png`;
             svgImg.onload = () => resolve(true);
             svgImg.onerror = () => resolve(false);
           };
@@ -252,7 +252,7 @@ const PartnerSlot = ({ num }: { num: number }) => {
   return (
     <div className="w-40 flex-shrink-0 h-20 flex items-center justify-center relative select-none">
       <img 
-        src={`/partners/partner-${num}.png`} 
+        src={`/partners/partner-${num}.webp`} 
         alt={`Логотип партнера ${num}`}
           onError={(e) => {
             if (e.currentTarget.src.endsWith('.png')) {
@@ -1442,7 +1442,7 @@ export default function App() {
             </div>
             
             {/* Главный контейнер */}
-            <div className="flex flex-col items-start min-[520px]:flex-row min-[520px]:items-center gap-1">
+            <div className="flex flex-col items-stretch w-full min-[555px]:flex-row min-[520px]:items-center gap-1">
 
               <div className="flex flex-row items-center gap-1">
 
@@ -1454,17 +1454,26 @@ export default function App() {
                     setCopiedHeaderUssd(true);
                     setTimeout(() => setCopiedHeaderUssd(false), 2000);
                   }}
-                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center"
+                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center flex-1 min-[520px]:flex-initial"
                   title="Наберите USSD-запрос или нажмите, чтобы скопировать"
                 >
                   <span
-                    className={`text-lg md:text-xl font-headline font-semibold transition-all ${
+                    className={`text-lg md:text-xl font-headline font-semibold transition-all flex items-center justify-center gap-1.5 ${
                       copiedHeaderUssd
                         ? 'text-emerald-600 font-bold'
                         : 'tracking-widest'
                     }`}
                   >
-                    {copiedHeaderUssd ? 'Скопировано' : '*222*75#'}
+                    {copiedHeaderUssd ? (
+                      'Скопировано'
+                    ) : (
+                      <>
+                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden flex-shrink-0 bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                          <img src="/a1.webp" alt="A1" className="w-[110%] h-[110%] object-cover object-center max-w-none shrink-0" referrerPolicy="no-referrer" />
+                        </div>
+                        <span>*222*75#</span>
+                      </>
+                    )}
                   </span>
                 </a>
 
@@ -1476,17 +1485,26 @@ export default function App() {
                     setCopiedHeaderSms(true);
                     setTimeout(() => setCopiedHeaderSms(false), 2000);
                   }}
-                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center"
+                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-800 hover:scale-[1.01] active:scale-95 px-2 py-1 rounded-full flex items-center justify-center font-semibold transition-all select-all text-center flex-1 min-[520px]:flex-initial"
                   title="Отправьте SMS или нажмите, чтобы скопировать"
                 >
                   <span
-                    className={`text-lg md:text-xl font-headline font-semibold transition-all ${
+                    className={`text-lg md:text-xl font-headline font-semibold transition-all flex items-center justify-center gap-1.5 ${
                       copiedHeaderSms
-                        ? 'text-emerald-600'
+                        ? 'text-emerald-600 font-bold'
                         : 'tracking-widest'
                     }`}
                   >
-                    {copiedHeaderSms ? 'Скопировано' : '2275'}
+                    {copiedHeaderSms ? (
+                      'Скопировано'
+                    ) : (
+                      <>
+                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden flex-shrink-0 bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                          <img src="/a1.webp" alt="A1" className="w-[110%] h-[110%] object-cover object-center max-w-none shrink-0" referrerPolicy="no-referrer" />
+                        </div>
+                        <span>2275</span>
+                      </>
+                    )}
                   </span>
                 </a>
               </div>
@@ -1496,8 +1514,7 @@ export default function App() {
                 href="https://pay.raschet.by/#00020132360010by.raschet0107154342410011120211520458125303933540115802BY5913UNC_4913389876007Belarus630444D0"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#E67E22] hover:bg-[#D35400] text-white hover:scale-[1.01] active:scale-95 px-3 py-1.5 rounded-full flex items-center justify-center font-bold transition-all shadow-sm shadow-orange-100 shrink-0 cursor-pointer text-center"
-                title="Поддержать фонд через ЕРИП"
+                className="bg-[#E67E22] hover:bg-[#D35400] text-white hover:scale-[1.01] active:scale-95 px-3 py-2 min-[520px]:py-1.5 rounded-full flex items-center justify-center font-bold transition-all shadow-sm shadow-orange-100 w-full min-[555px]:w-auto shrink-0 cursor-pointer text-center"
               >
                 <span className="text-sm md:text-base font-headline font-bold uppercase tracking-wider">
                   Поддержать фонд
@@ -1509,7 +1526,7 @@ export default function App() {
           </div>
   
             {/* Навигационные ссылки (скрыты на мобильных) */}
-            <nav className="hidden min-[1120px]:flex items-center gap-7">
+            <nav className="hidden min-[1195px]:flex items-center gap-6">
               {[
                 { name: 'Наш фонд', id: 'home' },
                 { name: 'Проекты', id: 'projects' },
@@ -1535,7 +1552,7 @@ export default function App() {
             <button 
               onClick={() => setIsMobileMenuOpen(true)} 
               aria-label="Открыть мобильное меню"
-              className="min-[1120px]:hidden text-slate-900 p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl transition-colors"
+              className="min-[1195px]:hidden text-slate-900 p-2 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-xl transition-colors"
             >
               <Menu size={24} />
             </button>
@@ -2812,7 +2829,10 @@ export default function App() {
                         className="text-purple-700 bg-purple-55 hover:bg-purple-100/80 active:scale-95 px-1.5 py-0.5 rounded-lg select-all font-mono font-black text-xs whitespace-nowrap transition-all flex items-center gap-1 border border-purple-100/60"
                         title="Нажмите, чтобы набрать или скопировать"
                       >
-                        *222*75#
+                        <div className="w-3.5 h-3.5 rounded-full overflow-hidden flex-shrink-0 bg-white border border-purple-100/30 flex items-center justify-center">
+                          <img src="/a1.webp" alt="A1" className="w-[110%] h-[110%] object-cover object-center max-w-none shrink-0" referrerPolicy="no-referrer" />
+                        </div>
+                        <span>*222*75#</span>
                         <Copy size={9} className="text-purple-400 shrink-0" />
                       </a>
                       {copiedFooterUssd && (
@@ -2835,7 +2855,10 @@ export default function App() {
                         className="text-purple-700 bg-purple-55 hover:bg-purple-100/80 active:scale-95 px-1.5 py-0.5 rounded-lg select-all font-mono font-black text-xs transition-all flex items-center gap-1 border border-purple-100/60"
                         title="Нажмите, чтобы отправить SMS или скопировать"
                       >
-                        2275
+                        <div className="w-3.5 h-3.5 rounded-full overflow-hidden flex-shrink-0 bg-white border border-purple-100/30 flex items-center justify-center">
+                          <img src="/a1.webp" alt="A1" className="w-[110%] h-[110%] object-cover object-center max-w-none shrink-0" referrerPolicy="no-referrer" />
+                        </div>
+                        <span>2275</span>
                         <Copy size={9} className="text-purple-400 shrink-0" />
                       </a>
                       {copiedFooterSms && (
