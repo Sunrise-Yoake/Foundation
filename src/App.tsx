@@ -833,6 +833,36 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+const ensureImageCompatible = async (file: File): Promise<File> => {
+  const isHeic = file.name.toLowerCase().endsWith('.heic') || 
+                 file.name.toLowerCase().endsWith('.heif') || 
+                 file.type === 'image/heic' || 
+                 file.type === 'image/heif';
+  
+  if (isHeic) {
+    try {
+      // Динамический импорт для ускорения начальной загрузки приложения
+      const heic2anyModule = await import('heic2any');
+      const heic2any = heic2anyModule.default;
+      
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.85
+      });
+      
+      const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      return new File([singleBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+        type: 'image/jpeg'
+      });
+    } catch (err) {
+      console.error("HEIC conversion failed:", err);
+      throw new Error("Не удалось автоматически обработать снимок HEIC.");
+    }
+  }
+  return file;
+};
+
 export default function App() {
   const activePartners = useDynamicPartners();
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -1085,16 +1115,17 @@ export default function App() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const compressedBase64 = await compressImage(file, false);
+        setAddProjectError("Выполняется адаптация и оптимизация формата HEIC (Apple)...");
+        
+        // Адаптация HEIC-файла под веб-стандарты перед загрузкой и сжатием
+        const compatibleFile = await ensureImageCompatible(file);
+        setAddProjectError(null);
+        
+        const compressedBase64 = await compressImage(compatibleFile, false);
         setNewProject(prev => ({ ...prev, image: compressedBase64 }));
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error compressing image:", err);
-        // Fallback to original
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setNewProject(prev => ({ ...prev, image: reader.result as string }));
-        };
-        reader.readAsDataURL(file);
+        setAddProjectError(err.message || "Ошибка при сжатии изображения.");
       }
     }
   };
