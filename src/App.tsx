@@ -833,6 +833,8 @@ function VolunteerForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+let heicCache: any = null;
+
 const ensureImageCompatible = async (file: File): Promise<File> => {
   const isHeic = file.name.toLowerCase().endsWith('.heic') || 
                  file.name.toLowerCase().endsWith('.heif') || 
@@ -841,9 +843,17 @@ const ensureImageCompatible = async (file: File): Promise<File> => {
   
   if (isHeic) {
     try {
-      // Динамический импорт для ускорения начальной загрузки приложения
-      const heic2anyModule = await import('heic2any');
-      const heic2any = heic2anyModule.default;
+      // Кэшируем динамический импорт, чтобы не грузить библиотеку повторно при каждом новом файле
+      if (!heicCache) {
+        const heic2anyModule = await import('heic2any');
+        heicCache = heic2anyModule.default || heic2anyModule;
+      }
+      
+      const heic2any = heicCache;
+      
+      if (typeof heic2any !== 'function') {
+        throw new Error("Библиотека heic2any не загружена корректно.");
+      }
       
       const convertedBlob = await heic2any({
         blob: file,
@@ -855,9 +865,9 @@ const ensureImageCompatible = async (file: File): Promise<File> => {
       return new File([singleBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
         type: 'image/jpeg'
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("HEIC conversion failed:", err);
-      throw new Error("Не удалось автоматически обработать снимок HEIC.");
+      throw new Error(err?.message || "Не удалось автоматически обработать снимок HEIC.");
     }
   }
   return file;
@@ -880,6 +890,7 @@ export default function App() {
   // Editing state
   const [editingProjectId, setEditingProjectId] = useState<string | number | null>(null);
   const [addProjectError, setAddProjectError] = useState<string | null>(null);
+  const [addProjectStatus, setAddProjectStatus] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -894,6 +905,11 @@ export default function App() {
     gallery: [] as string[],
     videoUrl: ''
   });
+
+  useEffect(() => {
+    setAddProjectError(null);
+    setAddProjectStatus(null);
+  }, [isAddProjectOpen]);
 
   // Track Firebase Auth state for administration permissions
   useEffect(() => {
@@ -1026,7 +1042,7 @@ export default function App() {
   };
 
   const compressImage = (file: File, isGallery = false): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const fileSizeKb = file.size / 1024;
       
       // Настройки сжатия в зависимости от веса файла и его назначения
@@ -1036,7 +1052,7 @@ export default function App() {
 
       if (isGallery) {
         if (fileSizeKb < 150) {
-          // Легкие фотографии практически не трогаем (сохраняем идеальное качество)
+          // Легкие фотографии практически не трогаем (сохраняем качество)
           maxWidth = 2000;
           maxHeight = 2000;
           quality = 0.95;
@@ -1105,7 +1121,13 @@ export default function App() {
             resolve(e.target?.result as string);
           }
         };
+        img.onerror = () => {
+          reject(new Error(`Не удалось загрузить изображение ${file.name} для сжатия. Пожалуйста, убедитесь, что это корректный файл изображения.`));
+        };
         img.src = e.target?.result as string;
+      };
+      reader.onerror = () => {
+        reject(new Error(`Не удалось прочитать файл ${file.name}.`));
       };
       reader.readAsDataURL(file);
     });
@@ -1114,56 +1136,131 @@ export default function App() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const isHeic = file.name.toLowerCase().endsWith('.heic') || 
+                     file.name.toLowerCase().endsWith('.heif') || 
+                     file.type === 'image/heic' || 
+                     file.type === 'image/heif';
       try {
-        setAddProjectError("Выполняется адаптация и оптимизация формата HEIC (Apple)...");
+        if (isHeic) {
+          setAddProjectStatus("Выполняется адаптация и оптимизация формата HEIC (Apple)...");
+        } else {
+          setAddProjectStatus("Выполняется оптимизация изображения...");
+        }
         
         // Адаптация HEIC-файла под веб-стандарты перед загрузкой и сжатием
         const compatibleFile = await ensureImageCompatible(file);
-        setAddProjectError(null);
+        
+        if (isHeic) {
+          setAddProjectStatus("Изображение адаптировано! Выполняется сжатие...");
+        }
         
         const compressedBase64 = await compressImage(compatibleFile, false);
         setNewProject(prev => ({ ...prev, image: compressedBase64 }));
+        setAddProjectStatus(null);
       } catch (err: any) {
         console.error("Error compressing image:", err);
         setAddProjectError(err.message || "Ошибка при сжатии изображения.");
+      } finally {
+        e.target.value = ''; // Важно! Позволяет загружать тот же файл по кругу
       }
     }
   };
 
   const handleGalleryChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const currentCount = newProject.gallery?.length || 0;
-      const allowedCount = 20 - currentCount;
+    if (files && files.length > 0) {
+      let filesToUpload = Array.from(files);
+      const currentGalleryCount = newProject.gallery?.length || 0;
+      const allowedCount = 20 - currentGalleryCount;
+
       if (allowedCount <= 0) {
         setAddProjectError("Достигнут лимит в 20 фотографий для галереи. Это необходимо для мгновенной загрузки и безотказной работы сайта.");
+        e.target.value = '';
         return;
       }
 
-      let filesToUpload = Array.from(files);
       if (filesToUpload.length > allowedCount) {
         setAddProjectError(`Можно добавить еще не более ${allowedCount} фото. Остальные файлы были автоматически пропущены.`);
         filesToUpload = filesToUpload.slice(0, allowedCount);
       }
 
+      const hasHeic = filesToUpload.some(file => 
+        file.name.toLowerCase().endsWith('.heic') || 
+        file.name.toLowerCase().endsWith('.heif') || 
+        file.type === 'image/heic' || 
+        file.type === 'image/heif'
+      );
+
       try {
-        const promises = filesToUpload.map(file => compressImage(file, true));
-        const results = await Promise.all(promises);
+        if (hasHeic) {
+          setAddProjectStatus("Обнаружены файлы HEIC (Apple). Выполняется адаптация снимков к веб-стандартам...");
+        } else {
+          setAddProjectStatus("Выполняется оптимизация фотографий...");
+        }
+
+        // 1. Адаптируем все файлы последовательно для предотвращения зависаний и перегрузки ОЗУ браузера
+        const compatibleFiles: File[] = [];
+        for (let i = 0; i < filesToUpload.length; i++) {
+          const file = filesToUpload[i];
+          const isFHeic = file.name.toLowerCase().endsWith('.heic') || 
+                          file.name.toLowerCase().endsWith('.heif') || 
+                          file.type === 'image/heic' || 
+                          file.type === 'image/heif';
+          
+          if (isFHeic) {
+            setAddProjectStatus(`Адаптация снимка HEIC (${i + 1} из ${filesToUpload.length})... Пожалуйста, подождите.`);
+          } else {
+            setAddProjectStatus(`Подготовка фотографии (${i + 1} из ${filesToUpload.length})...`);
+          }
+          const compatibleFile = await ensureImageCompatible(file);
+          compatibleFiles.push(compatibleFile);
+        }
+
+        if (hasHeic) {
+          setAddProjectStatus("Все файлы адаптированы! Сжимаем снимки для мгновенной загрузки...");
+        } else {
+          setAddProjectStatus("Сжимаем снимки...");
+        }
+
+        // 2. Сжимаем все адаптированные файлы последовательно
+        const results: string[] = [];
+        for (let i = 0; i < compatibleFiles.length; i++) {
+          setAddProjectStatus(`Оптимизация размера снимков (${i + 1} из ${compatibleFiles.length})...`);
+          const base64 = await compressImage(compatibleFiles[i], true);
+          results.push(base64);
+        }
+
         setNewProject(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...results] }));
-      } catch (err) {
+        setAddProjectStatus(null);
+      } catch (err: any) {
         console.error("Error compressing gallery images:", err);
-        // Fallback but sliced to fit limits
-        const readers = filesToUpload.map(file => {
-          return new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
+        setAddProjectStatus(null);
+        setAddProjectError(err.message || "Ошибка при сжатии фотографий.");
+        
+        // Резервный вариант для обычных картинок в случае непредвиденного сбоя:
+        const nonHeicFiles = filesToUpload.filter(file => {
+          const isFHeic = file.name.toLowerCase().endsWith('.heic') || 
+                          file.name.toLowerCase().endsWith('.heif') || 
+                          file.type === 'image/heic' || 
+                          file.type === 'image/heif';
+          return !isFHeic;
         });
 
-        Promise.all(readers).then(results => {
-          setNewProject(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...results] }));
-        });
+        if (nonHeicFiles.length > 0) {
+          const readers = nonHeicFiles.map(file => {
+            return new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+          });
+
+          Promise.all(readers).then(res => {
+            setNewProject(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...res] }));
+          });
+        }
+      } finally {
+        e.target.value = ''; // Важно! Очистка инпута для следующих кликов
       }
     }
   };
@@ -3527,7 +3624,7 @@ export default function App() {
                       <div className="relative group">
                         <input 
                           type="file"
-                          accept="image/*"
+                          accept="image/*,image/heic,image/heif,.heic,.heif" // <-- Обновить это свойство
                           onChange={handleFileChange}
                           className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         />
@@ -3577,7 +3674,7 @@ export default function App() {
                             <input 
                               type="file" 
                               multiple
-                              accept="image/*"
+                              accept="image/*,image/heic,image/heif,.heic,.heif" // <-- Обновить это свойство
                               onChange={handleGalleryChange}
                               className="absolute inset-0 opacity-0 cursor-pointer"
                             />
@@ -3602,6 +3699,17 @@ export default function App() {
                     </div>
 
                     <div className="pt-6">
+                      {/* Оранжевое нежное уведомление со статусом конвертации HEIC */}
+                      {addProjectStatus && (
+                        <div className="p-4 bg-amber-50 border border-amber-100/80 rounded-2xl text-amber-800 text-xs font-bold leading-relaxed mb-4 flex items-center gap-3">
+                          <span className="relative flex h-2.5 w-2.5 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                          </span>
+                          <span>{addProjectStatus}</span>
+                        </div>
+                      )}
+                      
                       {addProjectError && (
                         <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 text-xs font-bold leading-relaxed mb-4">
                           {addProjectError}
